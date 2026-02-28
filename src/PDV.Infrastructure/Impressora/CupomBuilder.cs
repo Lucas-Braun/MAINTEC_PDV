@@ -1,45 +1,39 @@
-using System.Text;
+using ESCPOS_NET.Emitters;
+using ESCPOS_NET.Utilities;
 
 namespace PDV.Infrastructure.Impressora;
 
 public class CupomBuilder
 {
-    private readonly List<byte> _buffer = new();
+    private readonly List<byte[]> _commands = new();
     private readonly int _colunas;
-    private readonly Encoding _encoding;
+    private readonly EPSON _e = new();
 
     public CupomBuilder(int colunas = 48)
     {
         _colunas = colunas;
-        _encoding = Encoding.GetEncoding(850); // Code page para acentos
-
-        // Inicializa impressora
-        _buffer.AddRange(new byte[] { 0x1B, 0x40 }); // ESC @
-        // Seleciona code page 850
-        _buffer.AddRange(new byte[] { 0x1B, 0x74, 0x02 });
+        _commands.Add(_e.Initialize());
     }
 
-    public void Centralizado() => _buffer.AddRange(new byte[] { 0x1B, 0x61, 0x01 });
-    public void Esquerda() => _buffer.AddRange(new byte[] { 0x1B, 0x61, 0x00 });
-    public void Direita() => _buffer.AddRange(new byte[] { 0x1B, 0x61, 0x02 });
-    public void NegritoOn() => _buffer.AddRange(new byte[] { 0x1B, 0x45, 0x01 });
-    public void NegritoOff() => _buffer.AddRange(new byte[] { 0x1B, 0x45, 0x00 });
-    public void FonteGrande() => _buffer.AddRange(new byte[] { 0x1D, 0x21, 0x11 });
-    public void FonteNormal() => _buffer.AddRange(new byte[] { 0x1D, 0x21, 0x00 });
+    public void Centralizado() => _commands.Add(_e.CenterAlign());
+    public void Esquerda() => _commands.Add(_e.LeftAlign());
+    public void Direita() => _commands.Add(_e.RightAlign());
+    public void NegritoOn() => _commands.Add(_e.SetStyles(PrintStyle.Bold));
+    public void NegritoOff() => _commands.Add(_e.SetStyles(PrintStyle.None));
 
-    public void AdicionarLinha(string texto)
-    {
-        _buffer.AddRange(_encoding.GetBytes(texto));
-        _buffer.Add(0x0A); // Line feed
-    }
+    public void FonteGrande() =>
+        _commands.Add(_e.SetStyles(PrintStyle.Bold | PrintStyle.DoubleWidth | PrintStyle.DoubleHeight));
+
+    public void FonteNormal() => _commands.Add(_e.SetStyles(PrintStyle.None));
+
+    public void AdicionarLinha(string texto) => _commands.Add(_e.PrintLine(texto));
 
     public void AdicionarLinhaDireita(string texto)
     {
         var espacos = _colunas - texto.Length;
         if (espacos > 0)
-            _buffer.AddRange(_encoding.GetBytes(new string(' ', espacos)));
-        _buffer.AddRange(_encoding.GetBytes(texto));
-        _buffer.Add(0x0A);
+            _commands.Add(_e.Print(new string(' ', espacos)));
+        _commands.Add(_e.PrintLine(texto));
     }
 
     public void AdicionarCampo(string label, string valor)
@@ -50,20 +44,11 @@ public class CupomBuilder
         AdicionarLinha(linha);
     }
 
-    public void LinhaTracejada()
-    {
-        AdicionarLinha(new string('-', _colunas));
-    }
+    public void LinhaTracejada() => AdicionarLinha(new string('-', _colunas));
 
-    public void AdicionarBytes(byte[] dados) => _buffer.AddRange(dados);
+    public void AdicionarBytes(byte[] dados) => _commands.Add(dados);
 
-    public void Cortar()
-    {
-        _buffer.Add(0x0A);
-        _buffer.Add(0x0A);
-        _buffer.Add(0x0A);
-        _buffer.AddRange(new byte[] { 0x1D, 0x56, 0x01 }); // Corte parcial
-    }
+    public void Cortar() => _commands.Add(_e.PartialCutAfterFeed(3));
 
-    public byte[] Build() => _buffer.ToArray();
+    public byte[] Build() => ByteSplicer.Combine(_commands.ToArray());
 }

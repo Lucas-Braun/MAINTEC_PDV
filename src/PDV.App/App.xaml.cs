@@ -7,9 +7,11 @@ using PDV.Infrastructure.Impressora;
 using PDV.Infrastructure.LocalDb;
 using PDV.Infrastructure.Services;
 using PDV.Infrastructure.TEF;
+using PDV.App.Themes;
 using PDV.App.ViewModels;
 using PDV.App.Views;
 using System.IO;
+using System.Text;
 using System.Windows;
 
 namespace PDV.App;
@@ -22,6 +24,8 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
         var services = new ServiceCollection();
 
         // Pasta de dados do PDV
@@ -36,7 +40,10 @@ public partial class App : Application
             options.UseSqlite($"Data Source={dbPath}"),
             ServiceLifetime.Transient);
 
-        // Configuracoes
+        // Configuracoes persistidas
+        var configService = new ConfiguracoesService();
+        var configApp = configService.Carregar();
+
         var apiConfig = new ErpApiConfig
         {
             BaseUrl = "http://localhost:5000",
@@ -45,14 +52,19 @@ public partial class App : Application
 
         var impressoraConfig = new ImpressoraConfig
         {
-            TipoConexao = "USB",
-            Porta = "COM3",
-            ColunasMaximas = 48,
-            NomeEmpresa = "SUA EMPRESA LTDA",
-            CnpjEmpresa = "00.000.000/0001-00",
-            EnderecoEmpresa = "Rua Exemplo, 123 - Cidade/UF"
+            TipoConexao = configApp.TipoConexao,
+            Porta = configApp.Porta,
+            BaudRate = configApp.BaudRate,
+            IpImpressora = configApp.IpImpressora,
+            PortaRede = configApp.PortaRede,
+            NomeSpooler = configApp.NomeSpooler,
+            ColunasMaximas = configApp.ColunasMaximas,
+            NomeEmpresa = configApp.NomeEmpresa,
+            CnpjEmpresa = configApp.CnpjEmpresa,
+            EnderecoEmpresa = configApp.EnderecoEmpresa
         };
 
+        services.AddSingleton(configService);
         services.AddSingleton(apiConfig);
         services.AddSingleton(impressoraConfig);
 
@@ -84,6 +96,7 @@ public partial class App : Application
         services.AddTransient<SangriaSuprimentoViewModel>();
         services.AddTransient<FechamentoCaixaViewModel>();
         services.AddTransient<ConfiguracoesViewModel>();
+        services.AddTransient<ComprovanteViewModel>();
 
         // Views
         services.AddTransient<MainWindow>();
@@ -100,6 +113,9 @@ public partial class App : Application
 
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show();
+
+        // Aplicar tema salvo
+        ThemeManager.ApplyTheme(configApp.Tema);
 
         base.OnStartup(e);
     }

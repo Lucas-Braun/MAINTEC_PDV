@@ -1,8 +1,10 @@
+using ESCPOS_NET.Emitters;
+using ESCPOS_NET.Utilities;
 using PDV.Core.Enums;
 using PDV.Core.Interfaces;
 using PDV.Core.Models;
 using System.IO.Ports;
-using System.Text;
+using System.Runtime.InteropServices;
 
 namespace PDV.Infrastructure.Impressora;
 
@@ -100,11 +102,13 @@ public class ImpressoraService : IImpressoraService
 
     public async Task ImprimirComprovanteTEF(string comprovante)
     {
-        var bytes = Encoding.GetEncoding(850).GetBytes(comprovante);
-        var builder = new CupomBuilder(_config.ColunasMaximas);
-        builder.AdicionarBytes(bytes);
-        builder.Cortar();
-        await EnviarParaImpressora(builder.Build());
+        var e = new EPSON();
+        var dados = ByteSplicer.Combine(
+            e.Initialize(),
+            e.Print(comprovante),
+            e.PartialCutAfterFeed(3)
+        );
+        await EnviarParaImpressora(dados);
     }
 
     public async Task ImprimirFechamentoCaixa(Caixa caixa)
@@ -147,36 +151,17 @@ public class ImpressoraService : IImpressoraService
 
     public async Task AbrirGaveta()
     {
-        byte[] abrirGaveta = { 0x1B, 0x70, 0x00, 0x19, 0xFA };
-        await EnviarParaImpressora(abrirGaveta);
+        var e = new EPSON();
+        await EnviarParaImpressora(e.CashDrawerOpenPin2());
     }
 
     public async Task CortarPapel()
     {
-        byte[] cortar = { 0x1D, 0x56, 0x01 };
-        await EnviarParaImpressora(cortar);
+        var e = new EPSON();
+        await EnviarParaImpressora(e.PartialCut());
     }
 
-    public bool VerificarConexao()
-    {
-        try
-        {
-            if (_config.TipoConexao is "USB" or "Serial")
-            {
-                using var port = new SerialPort(_config.Porta);
-                port.Open();
-                port.Close();
-                return true;
-            }
-            return false;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private async Task EnviarParaImpressora(byte[] dados)
+    public async Task EnviarRaw(byte[] dados)
     {
         switch (_config.TipoConexao)
         {
@@ -190,6 +175,56 @@ public class ImpressoraService : IImpressoraService
             case "Windows":
                 await EnviarSpooler(dados);
                 break;
+            default:
+                throw new Exception($"Tipo de conexao desconhecido: {_config.TipoConexao}");
+        }
+    }
+
+    public bool VerificarConexao()
+    {
+        try
+        {
+            if (_config.TipoConexao is "USB" or "Serial")
+            {
+                using var port = new SerialPort(_config.Porta);
+                port.Open();
+                port.Close();
+                return true;
+            }
+            if (_config.TipoConexao is "Windows")
+            {
+                return !string.IsNullOrEmpty(_config.NomeSpooler)
+                    && RawPrinterHelper.PrinterExists(_config.NomeSpooler);
+            }
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task EnviarParaImpressora(byte[] dados)
+    {
+        try
+        {
+            switch (_config.TipoConexao)
+            {
+                case "USB":
+                case "Serial":
+                    await EnviarSerial(dados);
+                    break;
+                case "Rede":
+                    await EnviarRede(dados);
+                    break;
+                case "Windows":
+                    await EnviarSpooler(dados);
+                    break;
+            }
+        }
+        catch (Exception)
+        {
+            // Impressora indisponivel - ignora silenciosamente
         }
     }
 
@@ -212,10 +247,95 @@ public class ImpressoraService : IImpressoraService
 
     private async Task EnviarSpooler(byte[] dados)
     {
-        // Implementar com P/Invoke: OpenPrinter, StartDocPrinter, WritePrinter
-        await Task.CompletedTask;
+        await Task.Run(() => RawPrinterHelper.SendBytesToPrinter(_config.NomeSpooler!, dados));
+    }
+
+    public static string[] ListarImpressorasWindows()
+    {
+        try
+        {
+            using var key = Microsoft.Win32.Registry.LocalMachine
+                .OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Print\Printers");
+            if (key == null) return [];
+            return key.GetSubKeyNames().OrderBy(n => n).ToArray();
+        }
+        catch
+        {
+            return [];
+        }
     }
 
     private static string TruncateString(string value, int maxLength) =>
         value.Length <= maxLength ? value : value[..maxLength];
+}
+
+internal static class RawPrinterHelper
+{
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct DOCINFOW
+    {
+        [MarshalAs(UnmanagedType.LPWStr)] public string pDocName;
+        [MarshalAs(UnmanagedType.LPWStr)] public string? pOutputFile;
+        [MarshalAs(UnmanagedType.LPWStr)] public string pDataType;
+    }
+
+    [DllImport("winspool.drv", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool OpenPrinter(string szPrinter, out IntPtr hPrinter, IntPtr pd);
+
+    [DllImport("winspool.drv", SetLastError = true)]
+    private static extern bool ClosePrinter(IntPtr hPrinter);
+
+    [DllImport("winspool.drv", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool StartDocPrinter(IntPtr hPrinter, int level, ref DOCINFOW di);
+
+    [DllImport("winspool.drv", SetLastError = true)]
+    private static extern bool EndDocPrinter(IntPtr hPrinter);
+
+    [DllImport("winspool.drv", SetLastError = true)]
+    private static extern bool StartPagePrinter(IntPtr hPrinter);
+
+    [DllImport("winspool.drv", SetLastError = true)]
+    private static extern bool EndPagePrinter(IntPtr hPrinter);
+
+    [DllImport("winspool.drv", SetLastError = true)]
+    private static extern bool WritePrinter(IntPtr hPrinter, IntPtr pBytes, int dwCount, out int dwWritten);
+
+    public static bool PrinterExists(string printerName)
+    {
+        if (!OpenPrinter(printerName, out var hPrinter, IntPtr.Zero))
+            return false;
+        ClosePrinter(hPrinter);
+        return true;
+    }
+
+    public static void SendBytesToPrinter(string printerName, byte[] dados)
+    {
+        if (!OpenPrinter(printerName, out var hPrinter, IntPtr.Zero))
+            throw new Exception($"Nao foi possivel abrir impressora: {printerName}");
+
+        var di = new DOCINFOW { pDocName = "PDV Cupom", pDataType = "RAW" };
+        try
+        {
+            StartDocPrinter(hPrinter, 1, ref di);
+            StartPagePrinter(hPrinter);
+
+            var pBytes = Marshal.AllocCoTaskMem(dados.Length);
+            try
+            {
+                Marshal.Copy(dados, 0, pBytes, dados.Length);
+                WritePrinter(hPrinter, pBytes, dados.Length, out _);
+            }
+            finally
+            {
+                Marshal.FreeCoTaskMem(pBytes);
+            }
+
+            EndPagePrinter(hPrinter);
+            EndDocPrinter(hPrinter);
+        }
+        finally
+        {
+            ClosePrinter(hPrinter);
+        }
+    }
 }
