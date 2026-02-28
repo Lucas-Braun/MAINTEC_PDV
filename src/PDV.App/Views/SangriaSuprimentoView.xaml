@@ -1,0 +1,126 @@
+<UserControl x:Class="PDV.App.Views.SangriaSuprimentoView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource BackgroundBrush}">
+
+    <UserControl.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding VoltarCommand}"/>
+    </UserControl.InputBindings>
+
+    <Grid>
+        <!-- Card central -->
+        <Border HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Width="420"
+                Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12"
+                Padding="40,36"
+                Effect="{DynamicResource CardShadow}">
+
+            <StackPanel>
+                <!-- Titulo -->
+                <TextBlock Text="{Binding Titulo}"
+                           Style="{DynamicResource TituloPDV}"
+                           FontSize="28"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,4"/>
+
+                <TextBlock Text="{Binding Descricao}"
+                           Style="{DynamicResource SubtituloPDV}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,32"/>
+
+                <!-- Valor -->
+                <TextBlock Text="VALOR (R$)"
+                           Style="{DynamicResource LabelPDV}"/>
+
+                <TextBox Text="{Binding Valor, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{DynamicResource TextBoxPDV}"
+                         FontSize="22" FontWeight="Bold"
+                         Padding="12,10"
+                         Margin="0,0,0,8"
+                         x:Name="TxtValor">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Return" Command="{Binding ConfirmarCommand}"/>
+                    </TextBox.InputBindings>
+                </TextBox>
+
+                <!-- Botoes de valor rapido -->
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Margin="0,0,0,16">
+                    <Button Content="R$ 50"
+                            Command="{Binding DefinirValorCommand}"
+                            CommandParameter="50"
+                            Style="{DynamicResource BotaoGhost}"
+                            FontSize="13" Padding="14,6"
+                            Margin="0,0,6,0"/>
+                    <Button Content="R$ 100"
+                            Command="{Binding DefinirValorCommand}"
+                            CommandParameter="100"
+                            Style="{DynamicResource BotaoGhost}"
+                            FontSize="13" Padding="14,6"
+                            Margin="0,0,6,0"/>
+                    <Button Content="R$ 200"
+                            Command="{Binding DefinirValorCommand}"
+                            CommandParameter="200"
+                            Style="{DynamicResource BotaoGhost}"
+                            FontSize="13" Padding="14,6"/>
+                </StackPanel>
+
+                <!-- Observacao -->
+                <TextBlock Text="OBSERVACAO"
+                           Style="{DynamicResource LabelPDV}"/>
+
+                <TextBox Text="{Binding Observacao, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{DynamicResource TextBoxPDV}"
+                         FontSize="14"
+                         Padding="12,10"
+                         Height="80"
+                         TextWrapping="Wrap"
+                         AcceptsReturn="True"
+                         VerticalScrollBarVisibility="Auto"
+                         Margin="0,0,0,24"/>
+
+                <!-- Mensagem de erro -->
+                <TextBlock Text="{Binding MensagemErro}"
+                           Foreground="{DynamicResource NegativeBrush}"
+                           FontSize="13"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,16"
+                           Visibility="{Binding MensagemErro, Converter={StaticResource StringToVisibility}}"/>
+
+                <!-- Botoes -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Content="VOLTAR (ESC)"
+                            Command="{Binding VoltarCommand}"
+                            Style="{DynamicResource BotaoNeutral}"
+                            FontSize="14" Height="48"
+                            Margin="0,0,5,0"/>
+
+                    <Button Grid.Column="1" Content="CONFIRMAR"
+                            Command="{Binding ConfirmarCommand}"
+                            Style="{DynamicResource BotaoPositive}"
+                            FontSize="14" Height="48"
+                            IsEnabled="{Binding Processando, Converter={StaticResource InvertBool}}"
+                            Margin="5,0,0,0"/>
+                </Grid>
+
+                <!-- Loading -->
+                <TextBlock Text="Processando..."
+                           FontSize="13"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center"
+                           Margin="0,8,0,0"
+                           Visibility="{Binding Processando, Converter={StaticResource BoolToVisibility}}"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+
+</UserControl>

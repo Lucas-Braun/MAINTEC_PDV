@@ -1,0 +1,107 @@
+<UserControl x:Class="PDV.App.Views.LoginView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource BackgroundBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Card central de login -->
+        <Border Grid.Row="0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Width="420"
+                Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12"
+                Padding="40,36"
+                Effect="{DynamicResource CardShadow}">
+
+            <StackPanel>
+                <!-- Titulo -->
+                <TextBlock Text="PDV"
+                           Style="{DynamicResource TituloPDV}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,4"/>
+
+                <TextBlock Text="Ponto de Venda"
+                           Style="{DynamicResource SubtituloPDV}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,32"/>
+
+                <!-- Campo Login -->
+                <TextBlock Text="OPERADOR"
+                           Style="{DynamicResource LabelPDV}"/>
+
+                <TextBox Text="{Binding Login, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{DynamicResource TextBoxPDV}"
+                         FontSize="18"
+                         Padding="12,10"
+                         Margin="0,0,0,16"
+                         x:Name="TxtLogin">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Return" Command="{Binding EntrarCommand}"/>
+                    </TextBox.InputBindings>
+                </TextBox>
+
+                <!-- Campo Senha -->
+                <TextBlock Text="SENHA"
+                           Style="{DynamicResource LabelPDV}"/>
+
+                <PasswordBox x:Name="TxtSenha"
+                             Style="{DynamicResource PasswordBoxPDV}"
+                             FontSize="18"
+                             Padding="12,10"
+                             Margin="0,0,0,24"/>
+
+                <!-- Mensagem de erro -->
+                <TextBlock Text="{Binding MensagemErro}"
+                           Foreground="{DynamicResource NegativeBrush}"
+                           FontSize="13"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,16"
+                           Visibility="{Binding MensagemErro, Converter={StaticResource StringToVisibility}}"/>
+
+                <!-- Botao Entrar -->
+                <Button Content="ENTRAR"
+                        Command="{Binding EntrarCommand}"
+                        Style="{DynamicResource BotaoPDV}"
+                        FontSize="16"
+                        Height="48"
+                        IsEnabled="{Binding Processando, Converter={StaticResource InvertBool}}"
+                        Margin="0,0,0,8"/>
+
+                <!-- Loading -->
+                <TextBlock Text="Autenticando..."
+                           FontSize="13"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center"
+                           Visibility="{Binding Processando, Converter={StaticResource BoolToVisibility}}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Barra inferior com status -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource ShellBrush}"
+                Padding="16,8">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Ellipse Width="8" Height="8"
+                             Margin="0,0,6,0"
+                             Fill="{Binding ErpConectado, Converter={StaticResource BoolToStatusColor}}"/>
+                    <TextBlock Text="{Binding ErpConectado, Converter={StaticResource BoolToConnectionText}}"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                </StackPanel>
+
+                <TextBlock Text="v1.0.0"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextSecondaryBrush}"/>
+            </DockPanel>
+        </Border>
+    </Grid>
+
+</UserControl>

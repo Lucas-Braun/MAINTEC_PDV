@@ -1,0 +1,252 @@
+<UserControl x:Class="PDV.App.Views.FechamentoCaixaView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource BackgroundBrush}">
+
+    <UserControl.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding VoltarCommand}"/>
+    </UserControl.InputBindings>
+
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="400"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- COLUNA ESQUERDA - Resumo financeiro -->
+        <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12" Padding="30" Margin="0,0,10,0"
+                Effect="{DynamicResource CardShadow}">
+            <StackPanel>
+                <TextBlock Text="FECHAMENTO DE CAIXA"
+                           Style="{DynamicResource TituloPDV}"
+                           FontSize="28"
+                           Margin="0,0,0,24"/>
+
+                <TextBlock Text="RESUMO FINANCEIRO"
+                           Style="{DynamicResource LabelPDV}"
+                           Margin="0,0,0,16"/>
+
+                <!-- Valor de Abertura -->
+                <Border Background="{DynamicResource SurfaceLightBrush}"
+                        CornerRadius="8" Padding="16,12" Margin="0,0,0,8">
+                    <Grid>
+                        <TextBlock Text="Valor de Abertura"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="14" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding ValorAbertura, StringFormat=C2}"
+                                   Foreground="{DynamicResource TextBrush}"
+                                   FontSize="16" FontWeight="Bold"
+                                   HorizontalAlignment="Right"/>
+                    </Grid>
+                </Border>
+
+                <!-- Total Vendas -->
+                <Border Background="{DynamicResource SurfaceLightBrush}"
+                        CornerRadius="8" Padding="16,12" Margin="0,0,0,8">
+                    <Grid>
+                        <TextBlock Text="Total Vendas"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="14" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding TotalVendas, StringFormat=C2}"
+                                   Foreground="{DynamicResource PositiveBrush}"
+                                   FontSize="16" FontWeight="Bold"
+                                   HorizontalAlignment="Right"/>
+                    </Grid>
+                </Border>
+
+                <Separator Background="{DynamicResource SeparatorBrush}" Margin="0,8"/>
+
+                <TextBlock Text="POR FORMA DE PAGAMENTO"
+                           Style="{DynamicResource LabelPDV}"
+                           Margin="0,8,0,12"/>
+
+                <!-- Dinheiro -->
+                <Border Background="{DynamicResource SurfaceLightBrush}"
+                        CornerRadius="8" Padding="16,10" Margin="0,0,0,4">
+                    <Grid>
+                        <TextBlock Text="Dinheiro"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding TotalDinheiro, StringFormat=C2}"
+                                   Foreground="{DynamicResource TextBrush}"
+                                   FontSize="14" FontWeight="Bold"
+                                   HorizontalAlignment="Right"/>
+                    </Grid>
+                </Border>
+
+                <!-- Cartao Credito -->
+                <Border Background="{DynamicResource SurfaceLightBrush}"
+                        CornerRadius="8" Padding="16,10" Margin="0,0,0,4">
+                    <Grid>
+                        <TextBlock Text="Cartao Credito"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding TotalCartaoCredito, StringFormat=C2}"
+                                   Foreground="{DynamicResource TextBrush}"
+                                   FontSize="14" FontWeight="Bold"
+                                   HorizontalAlignment="Right"/>
+                    </Grid>
+                </Border>
+
+                <!-- Cartao Debito -->
+                <Border Background="{DynamicResource SurfaceLightBrush}"
+                        CornerRadius="8" Padding="16,10" Margin="0,0,0,4">
+                    <Grid>
+                        <TextBlock Text="Cartao Debito"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding TotalCartaoDebito, StringFormat=C2}"
+                                   Foreground="{DynamicResource TextBrush}"
+                                   FontSize="14" FontWeight="Bold"
+                                   HorizontalAlignment="Right"/>
+                    </Grid>
+                </Border>
+
+                <!-- PIX -->
+                <Border Background="{DynamicResource SurfaceLightBrush}"
+                        CornerRadius="8" Padding="16,10" Margin="0,0,0,4">
+                    <Grid>
+                        <TextBlock Text="PIX"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding TotalPix, StringFormat=C2}"
+                                   Foreground="{DynamicResource TextBrush}"
+                                   FontSize="14" FontWeight="Bold"
+                                   HorizontalAlignment="Right"/>
+                    </Grid>
+                </Border>
+
+                <Separator Background="{DynamicResource SeparatorBrush}" Margin="0,8"/>
+
+                <!-- Sangria -->
+                <Border Background="{DynamicResource SurfaceLightBrush}"
+                        CornerRadius="8" Padding="16,10" Margin="0,0,0,4">
+                    <Grid>
+                        <TextBlock Text="(-) Sangrias"
+                                   Foreground="{DynamicResource NegativeBrush}"
+                                   FontSize="13" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding TotalSangria, StringFormat=C2}"
+                                   Foreground="{DynamicResource NegativeBrush}"
+                                   FontSize="14" FontWeight="Bold"
+                                   HorizontalAlignment="Right"/>
+                    </Grid>
+                </Border>
+
+                <!-- Suprimento -->
+                <Border Background="{DynamicResource SurfaceLightBrush}"
+                        CornerRadius="8" Padding="16,10" Margin="0,0,0,4">
+                    <Grid>
+                        <TextBlock Text="(+) Suprimentos"
+                                   Foreground="{DynamicResource PositiveBrush}"
+                                   FontSize="13" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding TotalSuprimento, StringFormat=C2}"
+                                   Foreground="{DynamicResource PositiveBrush}"
+                                   FontSize="14" FontWeight="Bold"
+                                   HorizontalAlignment="Right"/>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- COLUNA DIREITA - Contagem e fechamento -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Saldo Esperado -->
+            <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12" Padding="20" Margin="0,0,0,10"
+                    Effect="{DynamicResource CardShadow}">
+                <StackPanel>
+                    <TextBlock Text="SALDO ESPERADO EM CAIXA"
+                               Style="{DynamicResource LabelPDV}"
+                               Margin="0,0,0,8"/>
+                    <TextBlock Text="{Binding SaldoEsperado, StringFormat=C2}"
+                               Foreground="{DynamicResource PrimaryBrush}"
+                               FontSize="32" FontWeight="ExtraBold"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Contagem -->
+            <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12" Padding="20" Margin="0,0,0,10"
+                    Effect="{DynamicResource CardShadow}">
+                <StackPanel>
+                    <TextBlock Text="VALOR CONTADO (R$)"
+                               Style="{DynamicResource LabelPDV}"/>
+                    <TextBox Text="{Binding ValorFechamento, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource TextBoxPDV}"
+                             FontSize="24" FontWeight="Bold"
+                             Padding="12,10"
+                             Margin="0,0,0,16"
+                             x:Name="TxtValorFechamento">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Return" Command="{Binding FecharCaixaCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
+
+                    <TextBlock Text="DIFERENCA"
+                               Style="{DynamicResource LabelPDV}"/>
+                    <TextBlock Text="{Binding Diferenca, StringFormat=C2}"
+                               FontSize="24" FontWeight="ExtraBold"
+                               HorizontalAlignment="Center"
+                               Margin="0,4,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource PositiveBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Diferenca, Converter={StaticResource IsNegative}}" Value="True">
+                                        <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- Mensagem status -->
+            <StackPanel Grid.Row="2" VerticalAlignment="Top" Margin="0,10,0,0">
+                <TextBlock Text="{Binding MensagemStatus}"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           FontSize="13" TextWrapping="Wrap"
+                           HorizontalAlignment="Center"
+                           Visibility="{Binding MensagemStatus, Converter={StaticResource StringToVisibility}}"/>
+                <TextBlock Text="Processando..."
+                           FontSize="13"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center"
+                           Margin="0,8,0,0"
+                           Visibility="{Binding Processando, Converter={StaticResource BoolToVisibility}}"/>
+            </StackPanel>
+
+            <!-- Botoes -->
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" Content="VOLTAR (ESC)"
+                        Command="{Binding VoltarCommand}"
+                        Style="{DynamicResource BotaoNeutral}"
+                        FontSize="14" Height="48"
+                        Margin="0,0,5,0"/>
+
+                <Button Grid.Column="1" Content="FECHAR CAIXA"
+                        Command="{Binding FecharCaixaCommand}"
+                        Style="{DynamicResource BotaoNegative}"
+                        FontSize="14" Height="48"
+                        IsEnabled="{Binding Processando, Converter={StaticResource InvertBool}}"
+                        Margin="5,0,0,0"/>
+            </Grid>
+        </Grid>
+    </Grid>
+
+</UserControl>

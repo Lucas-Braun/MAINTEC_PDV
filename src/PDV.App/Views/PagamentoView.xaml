@@ -1,0 +1,318 @@
+<UserControl x:Class="PDV.App.Views.PagamentoView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource BackgroundBrush}">
+
+    <UserControl.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding VoltarCommand}"/>
+    </UserControl.InputBindings>
+
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="400"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- COLUNA ESQUERDA - Formas de pagamento -->
+        <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12" Padding="30" Margin="0,0,10,0"
+                Effect="{DynamicResource CardShadow}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Titulo -->
+                <TextBlock Grid.Row="0" Text="PAGAMENTO"
+                           Style="{DynamicResource TituloPDV}"
+                           FontSize="28"
+                           Margin="0,0,0,24"/>
+
+                <!-- Forma de pagamento -->
+                <StackPanel Grid.Row="1" Margin="0,0,0,20">
+                    <TextBlock Text="FORMA DE PAGAMENTO"
+                               Style="{DynamicResource LabelPDV}"
+                               Margin="0,0,0,8"/>
+
+                    <WrapPanel>
+                        <RadioButton GroupName="Forma"
+                                     IsChecked="True"
+                                     Style="{DynamicResource RadioPDV}"
+                                     Tag="Dinheiro"
+                                     Checked="FormaPagamento_Checked"
+                                     Margin="0,0,10,5">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="$" FontSize="18" FontWeight="Bold"
+                                           Foreground="{DynamicResource PositiveBrush}"
+                                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="Dinheiro" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton GroupName="Forma"
+                                     Style="{DynamicResource RadioPDV}"
+                                     Tag="CartaoCredito"
+                                     Checked="FormaPagamento_Checked"
+                                     Margin="0,0,10,5">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8C7;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="16"
+                                           Foreground="{DynamicResource PrimaryBrush}"
+                                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="Credito" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton GroupName="Forma"
+                                     Style="{DynamicResource RadioPDV}"
+                                     Tag="CartaoDebito"
+                                     Checked="FormaPagamento_Checked"
+                                     Margin="0,0,10,5">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8C7;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="16"
+                                           Foreground="{DynamicResource CriticalBrush}"
+                                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="Debito" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton GroupName="Forma"
+                                     Style="{DynamicResource RadioPDV}"
+                                     Tag="PIX"
+                                     Checked="FormaPagamento_Checked"
+                                     Margin="0,0,10,5">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE943;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="16"
+                                           Foreground="{DynamicResource PositiveBrush}"
+                                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="PIX" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </RadioButton>
+                    </WrapPanel>
+                </StackPanel>
+
+                <!-- Valor do pagamento -->
+                <Grid Grid.Row="2" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                        <TextBlock Text="VALOR DO PAGAMENTO"
+                                   Style="{DynamicResource LabelPDV}"/>
+                        <TextBox Text="{Binding ValorPagamento, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{DynamicResource TextBoxPDV}"
+                                 FontSize="20" FontWeight="Bold"
+                                 Padding="12,10"
+                                 x:Name="TxtValorPagamento">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Return" Command="{Binding AdicionarPagamentoCommand}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0"
+                                x:Name="PnlValorRecebido">
+                        <TextBlock Text="VALOR RECEBIDO"
+                                   Style="{DynamicResource LabelPDV}"/>
+                        <TextBox Text="{Binding ValorRecebido, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{DynamicResource TextBoxPDV}"
+                                 FontSize="20" FontWeight="Bold"
+                                 Padding="12,10"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Parcelas (credito) -->
+                <StackPanel Grid.Row="3" Margin="0,0,0,16"
+                            x:Name="PnlParcelas">
+                    <TextBlock Text="PARCELAS"
+                               Style="{DynamicResource LabelPDV}"/>
+                    <TextBox Text="{Binding Parcelas, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource TextBoxPDV}"
+                             FontSize="18" Padding="12,10"
+                             Width="100" HorizontalAlignment="Left"/>
+                </StackPanel>
+
+                <!-- Troco -->
+                <Border Grid.Row="4" VerticalAlignment="Top"
+                        Background="{DynamicResource SurfaceLightBrush}"
+                        CornerRadius="10" Padding="20,16" Margin="0,10,0,0"
+                        BorderBrush="{DynamicResource CriticalBrush}"
+                        BorderThickness="1"
+                        x:Name="PnlTroco">
+                    <StackPanel>
+                        <TextBlock Text="TROCO"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="11" FontWeight="SemiBold"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                    Margin="0,6,0,0">
+                            <TextBlock Text="R$ "
+                                       Foreground="{DynamicResource CriticalBrush}"
+                                       FontSize="18" FontWeight="Normal"
+                                       VerticalAlignment="Bottom" Margin="0,0,0,3"/>
+                            <TextBlock Text="{Binding Troco, StringFormat=N2}"
+                                       Foreground="{DynamicResource CriticalBrush}"
+                                       FontSize="36" FontWeight="ExtraBold"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- COLUNA DIREITA - Lista de pagamentos + totais -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Totais da venda -->
+            <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12" Padding="20" Margin="0,0,0,10"
+                    Effect="{DynamicResource CardShadow}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,8">
+                        <TextBlock Text="Total da Venda:"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="14"/>
+                        <TextBlock Text="{Binding ValorTotal, StringFormat=C2}"
+                                   Foreground="{DynamicResource TextBrush}"
+                                   FontSize="18" FontWeight="Bold"
+                                   HorizontalAlignment="Right"/>
+                    </Grid>
+                    <Grid Margin="0,0,0,8">
+                        <TextBlock Text="Total Pago:"
+                                   Foreground="{DynamicResource PositiveBrush}"
+                                   FontSize="14"/>
+                        <TextBlock Text="{Binding TotalPago, StringFormat=C2}"
+                                   Foreground="{DynamicResource PositiveBrush}"
+                                   FontSize="18" FontWeight="Bold"
+                                   HorizontalAlignment="Right"/>
+                    </Grid>
+                    <Separator Background="{DynamicResource SeparatorBrush}" Margin="0,0,0,8"/>
+                    <Grid>
+                        <TextBlock Text="Restante:"
+                                   Foreground="{DynamicResource CriticalBrush}"
+                                   FontSize="16" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding ValorRestante, StringFormat=C2}"
+                                   Foreground="{DynamicResource CriticalBrush}"
+                                   FontSize="24" FontWeight="ExtraBold"
+                                   HorizontalAlignment="Right"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Lista de pagamentos -->
+            <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12" Padding="15" Margin="0,0,0,10"
+                    Effect="{DynamicResource CardShadow}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="PAGAMENTOS ADICIONADOS"
+                               Style="{DynamicResource LabelPDV}"
+                               Margin="5,0,0,10"/>
+
+                    <ListBox Grid.Row="1"
+                             ItemsSource="{Binding Pagamentos}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource SurfaceLightBrush}"
+                                        CornerRadius="8" Padding="12,10" Margin="0,0,0,4">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border Grid.Column="0"
+                                                Background="{DynamicResource PrimarySubtleBrush}"
+                                                CornerRadius="4" Width="28" Height="28"
+                                                Margin="0,0,10,0">
+                                            <TextBlock Text="$" FontSize="14" FontWeight="Bold"
+                                                       Foreground="{DynamicResource PrimaryBrush}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding FormaPagamento}"
+                                                   Foreground="{DynamicResource TextBrush}"
+                                                   FontSize="13" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding Valor, StringFormat=C2}"
+                                                   Foreground="{DynamicResource PositiveBrush}"
+                                                   FontSize="14" FontWeight="Bold"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,10,0"/>
+                                        <Button Grid.Column="3"
+                                                Content="X"
+                                                Command="{Binding DataContext.RemoverPagamentoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                Foreground="{DynamicResource NegativeBrush}"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                FontWeight="Bold"
+                                                Cursor="Hand"
+                                                Padding="4,2"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <!-- Mensagem status -->
+            <TextBlock Grid.Row="2"
+                       Text="{Binding MensagemStatus}"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       FontSize="12" Margin="5,0,0,8"
+                       Visibility="{Binding MensagemStatus, Converter={StaticResource StringToVisibility}}"/>
+
+            <!-- Botoes -->
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" Content="VOLTAR (ESC)"
+                        Command="{Binding VoltarCommand}"
+                        Style="{DynamicResource BotaoNeutral}"
+                        FontSize="14" Height="48"
+                        Margin="0,0,5,0"/>
+
+                <Button Grid.Column="1" Content="ADICIONAR"
+                        Command="{Binding AdicionarPagamentoCommand}"
+                        Style="{DynamicResource BotaoPDV}"
+                        FontSize="14" Height="48"
+                        Margin="5,0,0,0"/>
+            </Grid>
+
+            <!-- Botao confirmar (aparece quando pagamento completo) -->
+            <Button Grid.Row="3"
+                    Content="CONFIRMAR PAGAMENTO"
+                    Command="{Binding ConfirmarCommand}"
+                    Style="{DynamicResource BotaoPositive}"
+                    FontSize="16" Height="48"
+                    Visibility="{Binding PodeConfirmar, Converter={StaticResource BoolToVisibility}}"
+                    Panel.ZIndex="10"
+                    Margin="0,0,0,0"/>
+        </Grid>
+    </Grid>
+
+</UserControl>

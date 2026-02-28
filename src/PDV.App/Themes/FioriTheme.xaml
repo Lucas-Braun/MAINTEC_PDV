@@ -1,0 +1,44 @@
+<!-- =============================================
+     FIORI THEME - Arquivo Principal
+
+     *** TEMAS DISPONIVEIS ***
+     Morning Horizon (Light): Fiori/Colors.MorningHorizon.xaml
+     Evening Horizon (Dark):  Fiori/Colors.EveningHorizon.xaml
+
+     Para trocar: mude o Source abaixo, ou use
+     ThemeManager.ApplyTheme("MorningHorizon") em runtime.
+
+     *** RECURSOS DISPONIVEIS ***
+
+     Brushes:
+       BackgroundBrush, ShellBrush, SurfaceBrush, SurfaceLightBrush
+       PrimaryBrush, PrimaryDarkBrush, PrimarySubtleBrush
+       PositiveBrush, NegativeBrush, CriticalBrush, NeutralBrush
+       TextBrush, TextSecondaryBrush, TextOnColorBrush
+       BorderBrush, SeparatorBrush, FocusBrush
+       RowHoverBrush, RowAlternateBrush, OverlaySuccessBrush
+
+     Styles:
+       BotaoPDV, BotaoPositive, BotaoNegative, BotaoCritical,
+       BotaoGhost, BotaoNeutral, BotaoFuncao
+       TextBoxPDV, PasswordBoxPDV
+       DataGridPDV, StatusDotOnline
+       LabelPDV, TituloPDV, SubtituloPDV
+       CardPDV
+
+     Effects:
+       CardShadow, CardShadowHover
+     ============================================= -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ResourceDictionary.MergedDictionaries>
+        <!-- Troque aqui para mudar o tema:
+             Fiori/Colors.MorningHorizon.xaml  (Light)
+             Fiori/Colors.EveningHorizon.xaml  (Dark)
+             Fiori/Colors.xaml                 (Dark - legado) -->
+        <ResourceDictionary Source="Fiori/Colors.MorningHorizon.xaml"/>
+        <ResourceDictionary Source="Fiori/Controls.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

@@ -1,0 +1,83 @@
+<UserControl x:Class="PDV.App.Views.AberturaCaixaView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource BackgroundBrush}">
+
+    <Grid>
+        <!-- Card central -->
+        <Border HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Width="420"
+                Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12"
+                Padding="40,36"
+                Effect="{DynamicResource CardShadow}">
+
+            <StackPanel>
+                <!-- Titulo -->
+                <TextBlock Text="ABERTURA DE CAIXA"
+                           Style="{DynamicResource TituloPDV}"
+                           FontSize="28"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,4"/>
+
+                <TextBlock Text="Informe os dados para abrir o caixa"
+                           Style="{DynamicResource SubtituloPDV}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,32"/>
+
+                <!-- Numero do Caixa -->
+                <TextBlock Text="NUMERO DO CAIXA"
+                           Style="{DynamicResource LabelPDV}"/>
+
+                <TextBox Text="{Binding NumeroCaixa, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{DynamicResource TextBoxPDV}"
+                         FontSize="18"
+                         Padding="12,10"
+                         Margin="0,0,0,16"
+                         x:Name="TxtNumeroCaixa"/>
+
+                <!-- Valor de Abertura -->
+                <TextBlock Text="VALOR DE ABERTURA (R$)"
+                           Style="{DynamicResource LabelPDV}"/>
+
+                <TextBox Text="{Binding ValorAbertura, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{DynamicResource TextBoxPDV}"
+                         FontSize="18"
+                         Padding="12,10"
+                         Margin="0,0,0,24"
+                         x:Name="TxtValorAbertura">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Return" Command="{Binding AbrirCaixaCommand}"/>
+                    </TextBox.InputBindings>
+                </TextBox>
+
+                <!-- Mensagem de erro -->
+                <TextBlock Text="{Binding MensagemErro}"
+                           Foreground="{DynamicResource NegativeBrush}"
+                           FontSize="13"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,16"
+                           Visibility="{Binding MensagemErro, Converter={StaticResource StringToVisibility}}"/>
+
+                <!-- Botao Abrir -->
+                <Button Content="ABRIR CAIXA"
+                        Command="{Binding AbrirCaixaCommand}"
+                        Style="{DynamicResource BotaoPositive}"
+                        FontSize="16"
+                        Height="48"
+                        IsEnabled="{Binding Processando, Converter={StaticResource InvertBool}}"
+                        Margin="0,0,0,8"/>
+
+                <!-- Loading -->
+                <TextBlock Text="Abrindo caixa..."
+                           FontSize="13"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center"
+                           Visibility="{Binding Processando, Converter={StaticResource BoolToVisibility}}"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+
+</UserControl>
