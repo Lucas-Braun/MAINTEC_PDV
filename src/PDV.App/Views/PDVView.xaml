@@ -43,12 +43,9 @@
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal"
                             VerticalAlignment="Center">
-                    <TextBlock Text="PDV" FontSize="22" FontWeight="Bold"
+                    <TextBlock Text="MEINTEC" FontSize="22" FontWeight="Bold"
                                Foreground="{DynamicResource PrimaryBrush}"
                                VerticalAlignment="Center" />
-                    <TextBlock Text=" - Ponto de Venda" FontSize="14"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               VerticalAlignment="Center" Margin="5,3,0,0" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal"
