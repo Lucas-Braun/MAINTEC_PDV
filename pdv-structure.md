@@ -1,6 +1,6 @@
 # MAINTEC PDV — Estrutura do Projeto
 
-## Status: Solution compilando e rodando (.NET 8.0) — 8 telas, 2 temas, GitHub
+## Status: Solution compilando e rodando (.NET 8.0) — 9 telas, 2 temas, ESCPOS_NET, GitHub
 
 **Repositorio:** https://github.com/Lucas-Braun/MAINTEC_PDV.git
 
@@ -12,7 +12,9 @@ nuget.config                           ✅ Source nuget.org
 │
 ├── src/
 │   ├── PDV.App/                        # Projeto WPF Principal (UI)
-│   │   ├── App.xaml / App.xaml.cs      ✅ DI completo + SQLite auto-create
+│   │   ├── App.xaml / App.xaml.cs      ✅ DI completo + SQLite auto-create +
+│   │   │                                 CodePagesEncodingProvider + ConfiguracoesService +
+│   │   │                                 ThemeManager.ApplyTheme no startup
 │   │   ├── Themes/
 │   │   │   ├── FioriTheme.xaml         ✅ Tema ativo (merge Colors + Controls)
 │   │   │   ├── ThemeManager.cs         ✅ Troca de tema em runtime (ApplyTheme/CurrentTheme)
@@ -27,7 +29,7 @@ nuget.config                           ✅ Source nuget.org
 │   │   ├── Controls/
 │   │   │   └── FadeContentControl.cs   ✅ Transicao animada entre telas
 │   │   ├── Views/
-│   │   │   ├── MainWindow.xaml/.cs     ✅ Shell fullscreen + DataTemplates (8 telas)
+│   │   │   ├── MainWindow.xaml/.cs     ✅ Shell fullscreen + DataTemplates (9 telas)
 │   │   │   ├── LoginView.xaml/.cs      ✅ Layout split: branding MAINTEC + formulario
 │   │   │   ├── PDVView.xaml/.cs        ✅ Tela principal + F-keys + empty state +
 │   │   │   │                              loading overlay + edicao QTD inline
@@ -36,7 +38,8 @@ nuget.config                           ✅ Source nuget.org
 │   │   │   ├── ConsultaProdutoView.xaml/.cs  ✅ Busca + DataGrid + estoque baixo em vermelho
 │   │   │   ├── SangriaSuprimentoView.xaml/.cs ✅ Saldo caixa + valor rapido + historico movimentos
 │   │   │   ├── FechamentoCaixaView.xaml/.cs  ✅ Resumo financeiro + contagem + diferenca
-│   │   │   └── ConfiguracoesView.xaml/.cs    ✅ Troca tema + infos sistema (F10)
+│   │   │   ├── ConfiguracoesView.xaml/.cs    ✅ Troca tema + impressora + infos sistema (F10)
+│   │   │   └── ComprovanteView.xaml/.cs     ✅ Exibicao de comprovantes TEF
 │   │   ├── ViewModels/
 │   │   │   ├── MainViewModel.cs        ✅ Navegacao central + callbacks + caixa aberto check
 │   │   │   ├── LoginViewModel.cs       ✅ Auth local + ERP async
@@ -46,12 +49,13 @@ nuget.config                           ✅ Source nuget.org
 │   │   │   ├── ConsultaProdutoViewModel.cs   ✅ IProdutoService.Pesquisar
 │   │   │   ├── SangriaSuprimentoViewModel.cs ✅ Sangria/Suprimento + saldo + historico + valor rapido
 │   │   │   ├── FechamentoCaixaViewModel.cs   ✅ Resumo + fechar + imprimir relatorio
-│   │   │   └── ConfiguracoesViewModel.cs     ✅ Troca tema + infos empresa/impressora/versao
+│   │   │   ├── ConfiguracoesViewModel.cs     ✅ Troca tema + config impressora + teste impressao
+│   │   │   └── ComprovanteViewModel.cs      ✅ Exibicao de comprovantes TEF
 │   │   └── Converters/
 │   │       └── Converters.cs           ✅ BoolToVisibility, InvertBool,
-│   │                                      StringToVisibility, Currency,
-│   │                                      BoolToStatusColor, BoolToConnectionText,
-│   │                                      IsNegative, EstoqueBaixo
+│   │                                      InvertBoolToVisibility, StringToVisibility,
+│   │                                      Currency, BoolToStatusColor,
+│   │                                      BoolToConnectionText, IsNegative, EstoqueBaixo
 │   │
 │   ├── PDV.Core/                       # Logica de Negocio (sem dependencias externas)
 │   │   ├── Models/
@@ -70,7 +74,7 @@ nuget.config                           ✅ Source nuget.org
 │   │   │   ├── IOperadorService.cs     ✅
 │   │   │   ├── INFCeService.cs         ✅ + ResultadoNFCe
 │   │   │   ├── ITEFService.cs          ✅ + ResultadoTEF
-│   │   │   └── IImpressoraService.cs   ✅
+│   │   │   └── IImpressoraService.cs   ✅ + EnviarRaw, VerificarConexao
 │   │   └── Enums/
 │   │       ├── StatusVenda.cs          ✅ EmAberto, Finalizada, Cancelada, Contingencia
 │   │       ├── FormaPagamento.cs       ✅ Dinheiro(1), Credito(3), Debito(4), PIX(17)
@@ -89,14 +93,15 @@ nuget.config                           ✅ Source nuget.org
 │   │   ├── TEF/
 │   │   │   └── TEFServiceStub.cs       ✅ Stub dev (simula aprovacao)
 │   │   ├── Impressora/
-│   │   │   ├── ImpressoraService.cs    ✅ Serial/Rede/Spooler
-│   │   │   ├── CupomBuilder.cs         ✅ ESC/POS completo
+│   │   │   ├── ImpressoraService.cs    ✅ Serial/Rede/Spooler + RawPrinterHelper (P/Invoke)
+│   │   │   ├── CupomBuilder.cs         ✅ ESCPOS_NET emitter (EPSON + ByteSplicer)
 │   │   │   └── ImpressoraConfig.cs     ✅ NomeEmpresa, CnpjEmpresa, EnderecoEmpresa
 │   │   ├── Services/
 │   │   │   ├── OperadorService.cs      ✅ Auth via SQLite (seed: admin/caixa1/caixa2, senha: 123)
 │   │   │   ├── VendaService.cs         ✅ Numero sequencial YYYYMMDD-NNNN, sync status
 │   │   │   ├── CaixaService.cs         ✅ Abertura/fechamento/sangria/suprimento
-│   │   │   └── ProdutoService.cs       ✅ Busca barcode/codigo/termo, upsert cache
+│   │   │   ├── ProdutoService.cs       ✅ Busca barcode/codigo/termo, upsert cache
+│   │   │   └── ConfiguracoesService.cs ✅ Salvar/carregar config JSON (%LocalAppData%/PDV/config.json)
 │   │   └── LocalDb/
 │   │       ├── PdvDbContext.cs          ✅ 7 tabelas, Fluent API, seed operadores
 │   │       └── SyncManager.cs          ⬜ Pendente (fila offline -> ERP)
@@ -136,7 +141,7 @@ O `MainWindow.xaml` tem DataTemplates que mapeiam cada ViewModel para sua View:
 [ObservableProperty]
 private ObservableObject? _telaAtual;
 
-// MainWindow.xaml — 8 DataTemplates:
+// MainWindow.xaml — 9 DataTemplates:
 <DataTemplate DataType="{x:Type vm:LoginViewModel}">              → LoginView
 <DataTemplate DataType="{x:Type vm:PDVViewModel}">                → PDVView
 <DataTemplate DataType="{x:Type vm:AberturaCaixaViewModel}">      → AberturaCaixaView
@@ -145,6 +150,7 @@ private ObservableObject? _telaAtual;
 <DataTemplate DataType="{x:Type vm:SangriaSuprimentoViewModel}">  → SangriaSuprimentoView
 <DataTemplate DataType="{x:Type vm:FechamentoCaixaViewModel}">    → FechamentoCaixaView
 <DataTemplate DataType="{x:Type vm:ConfiguracoesViewModel}">      → ConfiguracoesView
+<DataTemplate DataType="{x:Type vm:ComprovanteViewModel}">        → ComprovanteView
 ```
 
 ### Callbacks entre ViewModels
@@ -222,8 +228,11 @@ Troca feita pela tela de Configuracoes (F10) via RadioButtons.
 | 8 | Estoque baixo (<= 5) em vermelho | ConsultaProdutoView |
 | 9 | Historico ultimas 10 movimentacoes | SangriaSuprimentoView |
 | 10 | ProgressBar estilizada Fiori | Controls.xaml (global) |
-| 11 | Tela de Configuracoes (F10) — tema + infos sistema | ConfiguracoesView |
+| 11 | Tela de Configuracoes (F10) — tema + impressora + infos | ConfiguracoesView |
 | 12 | Login redesenhado — layout split com branding MAINTEC | LoginView |
+| 13 | Comprovante TEF — exibicao de comprovantes | ComprovanteView |
+| 14 | Config impressora persistida em JSON | ConfiguracoesService |
+| 15 | ESCPOS_NET — emitter EPSON substitui bytes hardcoded | CupomBuilder |
 
 ## Pacotes NuGet
 
@@ -240,6 +249,7 @@ PDV.Core:
 PDV.Infrastructure:
   ✅ Microsoft.EntityFrameworkCore.Sqlite 8.0.x
   ✅ Microsoft.EntityFrameworkCore.Design 8.0.x
+  ✅ ESCPOS_NET 3.0.0
   ✅ Polly
   ✅ System.IO.Ports
   ✅ Microsoft.Extensions.Http
@@ -256,14 +266,15 @@ PDV.Core → PDV.Shared
 ## DI (Dependency Injection) — App.xaml.cs
 
 ```
-Singleton:  ApiConfig, ImpressoraConfig, MainViewModel,
-            IOperadorService, IImpressoraService,
+Singleton:  ConfiguracoesService, ApiConfig, ImpressoraConfig,
+            MainViewModel, IOperadorService, IImpressoraService,
             INFCeService (stub), ITEFService (stub)
 
 Transient:  PdvDbContext, LoginViewModel, PDVViewModel,
             AberturaCaixaViewModel, PagamentoViewModel,
             ConsultaProdutoViewModel, SangriaSuprimentoViewModel,
             FechamentoCaixaViewModel, ConfiguracoesViewModel,
+            ComprovanteViewModel,
             IVendaService, ICaixaService, IProdutoService
 
 HttpClient: IApiClient → ErpApiClient
@@ -335,10 +346,13 @@ dotnet run --project src\PDV.App
 14. ✅ Melhorias UX (empty state, loading overlay, inline edit, etc.)
 15. ✅ Redesign tela de login (layout split com branding MAINTEC)
 16. ✅ Controles globais temados (ScrollBar, ToolTip, ProgressBar)
-17. ⬜ Fiscal: NFCeService real (ACBrLib)
-18. ⬜ TEF: TEFService real (SiTef/PayGo)
-19. ⬜ SyncManager (fila offline → ERP)
-20. ⬜ Testes
+17. ✅ ConfiguracoesService — persistencia JSON de config
+18. ✅ ComprovanteView — exibicao de comprovantes TEF
+19. ✅ ESCPOS_NET — emitter EPSON no CupomBuilder e ImpressoraService
+20. ⬜ Fiscal: NFCeService real (ACBrLib)
+21. ⬜ TEF: TEFService real (SiTef/PayGo)
+22. ⬜ SyncManager (fila offline → ERP)
+23. ⬜ Testes
 
 ## Ambiente
 

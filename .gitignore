@@ -25,5 +25,9 @@ Thumbs.db
 desktop.ini
 .DS_Store
 
+## Publish / Installer
+publish/
+installer_output/
+
 ## Claude
 .claude/
