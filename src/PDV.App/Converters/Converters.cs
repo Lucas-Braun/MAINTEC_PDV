@@ -61,6 +61,15 @@ public class IsNegativeConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+public class EstoqueBaixoConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is decimal d && d <= 5;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 public class CurrencyConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

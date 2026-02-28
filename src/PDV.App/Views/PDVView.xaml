@@ -148,26 +148,42 @@
                         <DataGrid ItemsSource="{Binding Itens}"
                                   SelectedItem="{Binding ItemSelecionado}"
                                   AutoGenerateColumns="False"
-                                  IsReadOnly="True"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  CanUserSortColumns="False"
+                                  CellEditEnding="DataGrid_CellEditEnding"
                                   Style="{DynamicResource DataGridPDV}">
 
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="#" Width="45"
-                                    Binding="{Binding NumeroItem}" />
+                                    Binding="{Binding NumeroItem}" IsReadOnly="True"/>
                                 <DataGridTextColumn Header="CODIGO" Width="130"
-                                    Binding="{Binding CodigoBarras}" />
+                                    Binding="{Binding CodigoBarras}" IsReadOnly="True"/>
                                 <DataGridTextColumn Header="DESCRICAO" Width="*"
-                                    Binding="{Binding DescricaoProduto}" />
+                                    Binding="{Binding DescricaoProduto}" IsReadOnly="True"/>
                                 <DataGridTextColumn Header="UN" Width="50"
-                                    Binding="{Binding UnidadeMedida}" />
+                                    Binding="{Binding UnidadeMedida}" IsReadOnly="True"/>
                                 <DataGridTextColumn Header="QTD" Width="70"
-                                    Binding="{Binding Quantidade, StringFormat=N2}" />
+                                    Binding="{Binding Quantidade, StringFormat=N2}">
+                                    <DataGridTextColumn.EditingElementStyle>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Background" Value="{DynamicResource SurfaceLightBrush}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                            <Setter Property="FontSize" Value="14"/>
+                                            <Setter Property="CaretBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                            <Setter Property="SelectionBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Padding" Value="4,2"/>
+                                        </Style>
+                                    </DataGridTextColumn.EditingElementStyle>
+                                </DataGridTextColumn>
                                 <DataGridTextColumn Header="VL. UNIT." Width="100"
-                                    Binding="{Binding PrecoUnitario, StringFormat=C2}" />
+                                    Binding="{Binding PrecoUnitario, StringFormat=C2}" IsReadOnly="True"/>
                                 <DataGridTextColumn Header="DESCONTO" Width="90"
-                                    Binding="{Binding DescontoValor, StringFormat=C2}" />
+                                    Binding="{Binding DescontoValor, StringFormat=C2}" IsReadOnly="True"/>
                                 <DataGridTextColumn Header="TOTAL" Width="110"
-                                    Binding="{Binding ValorTotal, StringFormat=C2}">
+                                    Binding="{Binding ValorTotal, StringFormat=C2}" IsReadOnly="True">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="FontWeight" Value="Bold" />

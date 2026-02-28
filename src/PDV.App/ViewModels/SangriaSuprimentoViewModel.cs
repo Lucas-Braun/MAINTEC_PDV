@@ -2,6 +2,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PDV.Core.Enums;
 using PDV.Core.Interfaces;
+using PDV.Core.Models;
+using System.Collections.ObjectModel;
 
 namespace PDV.App.ViewModels;
 
@@ -33,11 +35,30 @@ public partial class SangriaSuprimentoViewModel : ObservableObject
     [ObservableProperty]
     private bool _processando = false;
 
+    [ObservableProperty]
+    private decimal _saldoCaixa;
+
+    [ObservableProperty]
+    private ObservableCollection<MovimentoCaixa> _movimentos = new();
+
+    public bool TemMovimentos => Movimentos.Count > 0;
+
     // Titulo dinamico baseado no tipo
     public string Titulo => Tipo == TipoMovimentoCaixa.Sangria ? "SANGRIA" : "SUPRIMENTO";
     public string Descricao => Tipo == TipoMovimentoCaixa.Sangria
         ? "Retirada de valores do caixa"
         : "Entrada de valores no caixa";
+
+    public void CarregarDadosCaixa(Caixa caixa)
+    {
+        SaldoCaixa = caixa.SaldoEsperado;
+        var movs = caixa.Movimentos
+            .Where(m => m.Tipo == TipoMovimentoCaixa.Sangria || m.Tipo == TipoMovimentoCaixa.Suprimento)
+            .OrderByDescending(m => m.DataHora)
+            .Take(10);
+        Movimentos = new ObservableCollection<MovimentoCaixa>(movs);
+        OnPropertyChanged(nameof(TemMovimentos));
+    }
 
     partial void OnTipoChanged(TipoMovimentoCaixa value)
     {

@@ -387,6 +387,12 @@ public partial class PDVViewModel : ObservableObject
         AtualizarTotais();
     }
 
+    public void AtualizarAposEdicaoQuantidade()
+    {
+        VendaAtual.Itens = Itens.ToList();
+        AtualizarTotais();
+    }
+
     private void AtualizarTotais()
     {
         OnPropertyChanged(nameof(SubTotal));

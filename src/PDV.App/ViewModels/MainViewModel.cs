@@ -116,10 +116,21 @@ public partial class MainViewModel : ObservableObject
         TelaAtual = vm;
     }
 
-    private void NavegarParaSangriaSuprimento(TipoMovimentoCaixa tipo)
+    private async void NavegarParaSangriaSuprimento(TipoMovimentoCaixa tipo)
     {
         var vm = _services.GetRequiredService<SangriaSuprimentoViewModel>();
         vm.Tipo = tipo;
+
+        var operadorService = _services.GetRequiredService<IOperadorService>();
+        var caixaService = _services.GetRequiredService<ICaixaService>();
+        var operador = operadorService.OperadorLogado;
+        if (operador != null)
+        {
+            var caixa = await caixaService.ObterCaixaAberto(operador.Id);
+            if (caixa != null)
+                vm.CarregarDadosCaixa(caixa);
+        }
+
         vm.Confirmado = () =>
         {
             TelaAtual = _pdvVmAtual;

@@ -18,6 +18,7 @@
             <conv:BoolToConnectionTextConverter x:Key="BoolToConnectionText"/>
             <conv:CurrencyConverter x:Key="Currency"/>
             <conv:IsNegativeConverter x:Key="IsNegative"/>
+            <conv:EstoqueBaixoConverter x:Key="EstoqueBaixo"/>
         </ResourceDictionary>
     </Application.Resources>
 

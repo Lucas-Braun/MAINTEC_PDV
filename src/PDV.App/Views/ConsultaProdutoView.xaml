@@ -80,7 +80,20 @@
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
                     <DataGridTextColumn Header="ESTOQUE" Width="100"
-                        Binding="{Binding EstoqueAtual, StringFormat=N2}"/>
+                        Binding="{Binding EstoqueAtual, StringFormat=N2}">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding EstoqueAtual, Converter={StaticResource EstoqueBaixo}}" Value="True">
+                                        <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
