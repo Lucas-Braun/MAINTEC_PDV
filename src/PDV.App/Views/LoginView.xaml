@@ -4,103 +4,248 @@
              Background="{DynamicResource BackgroundBrush}">
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="480"/>
+        </Grid.ColumnDefinitions>
 
-        <!-- Card central de login -->
-        <Border Grid.Row="0"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Width="420"
-                Background="{DynamicResource SurfaceBrush}"
-                CornerRadius="12"
-                Padding="40,36"
-                Effect="{DynamicResource CardShadow}">
+        <!-- ============================================= -->
+        <!-- PAINEL ESQUERDO - Branding                    -->
+        <!-- ============================================= -->
+        <Border Grid.Column="0" Background="{DynamicResource ShellBrush}">
+            <Grid>
+                <!-- Gradiente decorativo sutil -->
+                <Border Opacity="0.15">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0"/>
+                            <GradientStop Color="Transparent" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                </Border>
 
-            <StackPanel>
-                <!-- Titulo -->
-                <TextBlock Text="PDV"
-                           Style="{DynamicResource TituloPDV}"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,4"/>
+                <!-- Conteudo centralizado -->
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Margin="60">
 
-                <TextBlock Text="Ponto de Venda"
-                           Style="{DynamicResource SubtituloPDV}"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,32"/>
+                    <!-- Icone PDV -->
+                    <Border Width="100" Height="100"
+                            CornerRadius="20"
+                            Background="{DynamicResource PrimaryBrush}"
+                            HorizontalAlignment="Center"
+                            Margin="0,0,0,32">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="30" ShadowDepth="0"
+                                              Opacity="0.4" Color="{DynamicResource PrimaryColor}"/>
+                        </Border.Effect>
+                        <TextBlock Text="&#xE7BF;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="48"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
 
-                <!-- Campo Login -->
-                <TextBlock Text="OPERADOR"
-                           Style="{DynamicResource LabelPDV}"/>
+                    <!-- Nome do sistema -->
+                    <TextBlock Text="MAINTEC"
+                               FontSize="48" FontWeight="ExtraBold"
+                               Foreground="{DynamicResource TextBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,4"/>
 
-                <TextBox Text="{Binding Login, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{DynamicResource TextBoxPDV}"
-                         FontSize="18"
-                         Padding="12,10"
-                         Margin="0,0,0,16"
-                         x:Name="TxtLogin">
-                    <TextBox.InputBindings>
-                        <KeyBinding Key="Return" Command="{Binding EntrarCommand}"/>
-                    </TextBox.InputBindings>
-                </TextBox>
+                    <TextBlock Text="Ponto de Venda"
+                               FontSize="18"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,40"/>
 
-                <!-- Campo Senha -->
-                <TextBlock Text="SENHA"
-                           Style="{DynamicResource LabelPDV}"/>
+                    <!-- Separador -->
+                    <Border Width="60" Height="3"
+                            Background="{DynamicResource PrimaryBrush}"
+                            CornerRadius="2"
+                            HorizontalAlignment="Center"
+                            Opacity="0.6"
+                            Margin="0,0,0,40"/>
 
-                <PasswordBox x:Name="TxtSenha"
-                             Style="{DynamicResource PasswordBoxPDV}"
-                             FontSize="18"
-                             Padding="12,10"
-                             Margin="0,0,0,24"/>
-
-                <!-- Mensagem de erro -->
-                <TextBlock Text="{Binding MensagemErro}"
-                           Foreground="{DynamicResource NegativeBrush}"
-                           FontSize="13"
-                           TextWrapping="Wrap"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,16"
-                           Visibility="{Binding MensagemErro, Converter={StaticResource StringToVisibility}}"/>
-
-                <!-- Botao Entrar -->
-                <Button Content="ENTRAR"
-                        Command="{Binding EntrarCommand}"
-                        Style="{DynamicResource BotaoPDV}"
-                        FontSize="16"
-                        Height="48"
-                        IsEnabled="{Binding Processando, Converter={StaticResource InvertBool}}"
-                        Margin="0,0,0,8"/>
-
-                <!-- Loading -->
-                <TextBlock Text="Autenticando..."
-                           FontSize="13"
-                           Foreground="{DynamicResource TextSecondaryBrush}"
-                           HorizontalAlignment="Center"
-                           Visibility="{Binding Processando, Converter={StaticResource BoolToVisibility}}"/>
-            </StackPanel>
-        </Border>
-
-        <!-- Barra inferior com status -->
-        <Border Grid.Row="1"
-                Background="{DynamicResource ShellBrush}"
-                Padding="16,8">
-            <DockPanel>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                    <Ellipse Width="8" Height="8"
-                             Margin="0,0,6,0"
-                             Fill="{Binding ErpConectado, Converter={StaticResource BoolToStatusColor}}"/>
-                    <TextBlock Text="{Binding ErpConectado, Converter={StaticResource BoolToConnectionText}}"
-                               FontSize="12"
-                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    <!-- Features do sistema -->
+                    <StackPanel HorizontalAlignment="Center" Opacity="0.7">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="14" Foreground="{DynamicResource PositiveBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="NFC-e integrado"
+                                       FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="14" Foreground="{DynamicResource PositiveBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="TEF com cartao e PIX"
+                                       FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="14" Foreground="{DynamicResource PositiveBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="Sincronizacao ERP"
+                                       FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                    </StackPanel>
                 </StackPanel>
 
+                <!-- Versao no canto inferior -->
                 <TextBlock Text="v1.0.0"
-                           FontSize="12"
-                           Foreground="{DynamicResource TextSecondaryBrush}"/>
-            </DockPanel>
+                           FontSize="11"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           Opacity="0.5"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Bottom"
+                           Margin="20,0,0,12"/>
+            </Grid>
+        </Border>
+
+        <!-- ============================================= -->
+        <!-- PAINEL DIREITO - Login                        -->
+        <!-- ============================================= -->
+        <Border Grid.Column="1"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource SeparatorBrush}"
+                BorderThickness="1,0,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Formulario de login centralizado -->
+                <StackPanel Grid.Row="0"
+                            VerticalAlignment="Center"
+                            Margin="60,0">
+
+                    <!-- Header do formulario -->
+                    <TextBlock Text="Bem-vindo"
+                               FontSize="32" FontWeight="Bold"
+                               Foreground="{DynamicResource TextBrush}"
+                               Margin="0,0,0,6"/>
+
+                    <TextBlock Text="Identifique-se para acessar o sistema"
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               Margin="0,0,0,40"/>
+
+                    <!-- Campo Login -->
+                    <TextBlock Text="OPERADOR"
+                               Style="{DynamicResource LabelPDV}"
+                               FontSize="12"/>
+
+                    <Grid Margin="0,0,0,20">
+                        <TextBox Text="{Binding Login, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{DynamicResource TextBoxPDV}"
+                                 FontSize="16"
+                                 Padding="14,12"
+                                 x:Name="TxtLogin">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Return" Command="{Binding EntrarCommand}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+                    </Grid>
+
+                    <!-- Campo Senha -->
+                    <TextBlock Text="SENHA"
+                               Style="{DynamicResource LabelPDV}"
+                               FontSize="12"/>
+
+                    <Grid Margin="0,0,0,28">
+                        <PasswordBox x:Name="TxtSenha"
+                                     Style="{DynamicResource PasswordBoxPDV}"
+                                     FontSize="16"
+                                     Padding="14,12"/>
+                    </Grid>
+
+                    <!-- Mensagem de erro -->
+                    <Border Margin="0,0,0,20"
+                            CornerRadius="8"
+                            Padding="14,10"
+                            Background="#20EF5350">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding MensagemErro, Converter={StaticResource StringToVisibility}}" Value="Visible">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding MensagemErro}"
+                                   Foreground="{DynamicResource NegativeBrush}"
+                                   FontSize="13"
+                                   TextWrapping="Wrap"/>
+                    </Border>
+
+                    <!-- Botao Entrar -->
+                    <Button Command="{Binding EntrarCommand}"
+                            Style="{DynamicResource BotaoPDV}"
+                            FontSize="16" FontWeight="Bold"
+                            Height="52"
+                            IsEnabled="{Binding Processando, Converter={StaticResource InvertBool}}"
+                            Margin="0,0,0,12">
+                        <Button.Content>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="ENTRAR"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="&#xE76C;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14"
+                                           VerticalAlignment="Center"
+                                           Margin="10,0,0,0"/>
+                            </StackPanel>
+                        </Button.Content>
+                    </Button>
+
+                    <!-- Loading -->
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Visibility="{Binding Processando, Converter={StaticResource BoolToVisibility}}">
+                        <ProgressBar IsIndeterminate="True"
+                                     Width="120" Height="3"
+                                     Foreground="{DynamicResource PrimaryBrush}"
+                                     Background="{DynamicResource SurfaceLightBrush}"
+                                     BorderThickness="0"
+                                     Margin="0,0,10,0"/>
+                        <TextBlock Text="Autenticando..."
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Status bar inferior -->
+                <Border Grid.Row="1"
+                        Background="{DynamicResource SurfaceLightBrush}"
+                        Padding="20,10"
+                        BorderBrush="{DynamicResource SeparatorBrush}"
+                        BorderThickness="0,1,0,0">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <Ellipse Width="8" Height="8"
+                                     Margin="0,0,6,0"
+                                     Fill="{Binding ErpConectado, Converter={StaticResource BoolToStatusColor}}"/>
+                            <TextBlock Text="{Binding ErpConectado, Converter={StaticResource BoolToConnectionText}}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </StackPanel>
+
+                        <TextBlock FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center"
+                                   FontFamily="Consolas"
+                                   Text="{Binding Source={x:Static System:DateTime.Now}, StringFormat='dd/MM/yyyy'}"
+                                   xmlns:System="clr-namespace:System;assembly=mscorlib"/>
+                    </DockPanel>
+                </Border>
+            </Grid>
         </Border>
     </Grid>
 
