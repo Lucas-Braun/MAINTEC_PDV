@@ -1,6 +1,6 @@
 # MAINTEC PDV — Estrutura do Projeto
 
-## Status: Solution compilando e rodando (.NET 8.0) — 9 telas, 2 temas, ESCPOS_NET, GitHub
+## Status: Solution compilando e rodando (.NET 8.0) — 9 telas, 2 temas, ESCPOS_NET, Instalador, GitHub
 
 **Repositorio:** https://github.com/Lucas-Braun/MAINTEC_PDV.git
 
@@ -9,6 +9,7 @@
 ```
 PDV.sln
 nuget.config                           ✅ Source nuget.org
+installer.iss                          ✅ Script Inno Setup (gera setup.exe PT-BR)
 │
 ├── src/
 │   ├── PDV.App/                        # Projeto WPF Principal (UI)
@@ -328,6 +329,18 @@ dotnet build PDV.sln
 dotnet run --project src\PDV.App
 ```
 
+## Como Gerar o Instalador
+
+```bash
+# 1. Publicar self-contained
+dotnet publish src/PDV.App/PDV.App.csproj -c Release -r win-x64 --self-contained -o ./publish
+
+# 2. Compilar installer.iss (requer Inno Setup instalado)
+"C:\InnoSetup\ISCC.exe" installer.iss
+
+# Saida: installer_output/MAINTEC_PDV_Setup_1.0.0.exe (~51 MB)
+```
+
 ## Proximos Passos
 
 1. ✅ Criar solution .NET com 4 projetos
@@ -349,7 +362,8 @@ dotnet run --project src\PDV.App
 17. ✅ ConfiguracoesService — persistencia JSON de config
 18. ✅ ComprovanteView — exibicao de comprovantes TEF
 19. ✅ ESCPOS_NET — emitter EPSON no CupomBuilder e ImpressoraService
-20. ⬜ Fiscal: NFCeService real (ACBrLib)
+20. ✅ Instalador Inno Setup — setup.exe self-contained PT-BR (~51 MB)
+21. ⬜ Fiscal: NFCeService real (ACBrLib)
 21. ⬜ TEF: TEFService real (SiTef/PayGo)
 22. ⬜ SyncManager (fila offline → ERP)
 23. ⬜ Testes
