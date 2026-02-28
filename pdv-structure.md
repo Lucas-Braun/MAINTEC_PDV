@@ -1,6 +1,8 @@
-# PDV WPF - Estrutura do Projeto
+# MAINTEC PDV — Estrutura do Projeto
 
-## Status: Solution compilando e rodando (.NET 8.0) — Todas as telas implementadas
+## Status: Solution compilando e rodando (.NET 8.0) — 8 telas, 2 temas, GitHub
+
+**Repositorio:** https://github.com/Lucas-Braun/MAINTEC_PDV.git
 
 ## Arquitetura Geral
 
@@ -13,34 +15,43 @@ nuget.config                           ✅ Source nuget.org
 │   │   ├── App.xaml / App.xaml.cs      ✅ DI completo + SQLite auto-create
 │   │   ├── Themes/
 │   │   │   ├── FioriTheme.xaml         ✅ Tema ativo (merge Colors + Controls)
-│   │   │   ├── DarkTheme.xaml          ✅ Tema alternativo
+│   │   │   ├── ThemeManager.cs         ✅ Troca de tema em runtime (ApplyTheme/CurrentTheme)
+│   │   │   ├── DarkTheme.xaml          ✅ Tema alternativo legado
 │   │   │   └── Fiori/
-│   │   │       ├── Colors.xaml         ✅ Paleta SAP Fiori Horizon Dark
+│   │   │       ├── Colors.xaml              ✅ Alias (importa o tema ativo)
+│   │   │       ├── Colors.MorningHorizon.xaml ✅ Tema Light (SAP Fiori Horizon)
+│   │   │       ├── Colors.EveningHorizon.xaml ✅ Tema Dark (SAP Fiori Horizon Dark)
 │   │   │       └── Controls.xaml       ✅ BotaoPDV, TextBoxPDV, DataGridPDV,
-│   │   │                                  RadioPDV, CardPDV, BotaoFuncao, etc.
+│   │   │                                  RadioPDV, CardPDV, BotaoFuncao,
+│   │   │                                  ScrollBar, ToolTip, ProgressBar (todos temados)
+│   │   ├── Controls/
+│   │   │   └── FadeContentControl.cs   ✅ Transicao animada entre telas
 │   │   ├── Views/
-│   │   │   ├── MainWindow.xaml/.cs     ✅ Shell fullscreen + DataTemplates (7 telas)
-│   │   │   ├── LoginView.xaml/.cs      ✅ Card login + status ERP
-│   │   │   ├── PDVView.xaml/.cs        ✅ Tela principal + F-keys (F2/F4/F5/F6/F9/F12)
+│   │   │   ├── MainWindow.xaml/.cs     ✅ Shell fullscreen + DataTemplates (8 telas)
+│   │   │   ├── LoginView.xaml/.cs      ✅ Layout split: branding MAINTEC + formulario
+│   │   │   ├── PDVView.xaml/.cs        ✅ Tela principal + F-keys + empty state +
+│   │   │   │                              loading overlay + edicao QTD inline
 │   │   │   ├── AberturaCaixaView.xaml/.cs    ✅ Card: numero caixa + valor abertura
 │   │   │   ├── PagamentoView.xaml/.cs        ✅ 2 colunas: formas pagamento / lista + totais
-│   │   │   ├── ConsultaProdutoView.xaml/.cs  ✅ Busca + DataGrid produtos + selecionar
-│   │   │   ├── SangriaSuprimentoView.xaml/.cs ✅ Card: valor + observacao (sangria E suprimento)
-│   │   │   └── FechamentoCaixaView.xaml/.cs  ✅ Resumo financeiro + contagem + diferenca
+│   │   │   ├── ConsultaProdutoView.xaml/.cs  ✅ Busca + DataGrid + estoque baixo em vermelho
+│   │   │   ├── SangriaSuprimentoView.xaml/.cs ✅ Saldo caixa + valor rapido + historico movimentos
+│   │   │   ├── FechamentoCaixaView.xaml/.cs  ✅ Resumo financeiro + contagem + diferenca
+│   │   │   └── ConfiguracoesView.xaml/.cs    ✅ Troca tema + infos sistema (F10)
 │   │   ├── ViewModels/
 │   │   │   ├── MainViewModel.cs        ✅ Navegacao central + callbacks + caixa aberto check
 │   │   │   ├── LoginViewModel.cs       ✅ Auth local + ERP async
-│   │   │   ├── PDVViewModel.cs         ✅ Fluxo venda + callbacks navegacao
+│   │   │   ├── PDVViewModel.cs         ✅ Fluxo venda + callbacks + edicao QTD inline
 │   │   │   ├── AberturaCaixaViewModel.cs     ✅ ICaixaService.AbrirCaixa
 │   │   │   ├── PagamentoViewModel.cs         ✅ Split payment, troco, parcelas
 │   │   │   ├── ConsultaProdutoViewModel.cs   ✅ IProdutoService.Pesquisar
-│   │   │   ├── SangriaSuprimentoViewModel.cs ✅ Sangria/Suprimento (mesma VM, tipo define acao)
-│   │   │   └── FechamentoCaixaViewModel.cs   ✅ Resumo + fechar + imprimir relatorio
+│   │   │   ├── SangriaSuprimentoViewModel.cs ✅ Sangria/Suprimento + saldo + historico + valor rapido
+│   │   │   ├── FechamentoCaixaViewModel.cs   ✅ Resumo + fechar + imprimir relatorio
+│   │   │   └── ConfiguracoesViewModel.cs     ✅ Troca tema + infos empresa/impressora/versao
 │   │   └── Converters/
 │   │       └── Converters.cs           ✅ BoolToVisibility, InvertBool,
 │   │                                      StringToVisibility, Currency,
 │   │                                      BoolToStatusColor, BoolToConnectionText,
-│   │                                      IsNegative
+│   │                                      IsNegative, EstoqueBaixo
 │   │
 │   ├── PDV.Core/                       # Logica de Negocio (sem dependencias externas)
 │   │   ├── Models/
@@ -80,7 +91,7 @@ nuget.config                           ✅ Source nuget.org
 │   │   ├── Impressora/
 │   │   │   ├── ImpressoraService.cs    ✅ Serial/Rede/Spooler
 │   │   │   ├── CupomBuilder.cs         ✅ ESC/POS completo
-│   │   │   └── ImpressoraConfig.cs     ✅
+│   │   │   └── ImpressoraConfig.cs     ✅ NomeEmpresa, CnpjEmpresa, EnderecoEmpresa
 │   │   ├── Services/
 │   │   │   ├── OperadorService.cs      ✅ Auth via SQLite (seed: admin/caixa1/caixa2, senha: 123)
 │   │   │   ├── VendaService.cs         ✅ Numero sequencial YYYYMMDD-NNNN, sync status
@@ -107,6 +118,7 @@ Login → AberturaCaixa (se nao tem caixa aberto) → PDV
                                                     ├─ F5  → SangriaSuprimento(Sangria) → PDV
                                                     ├─ F6  → SangriaSuprimento(Suprimento) → PDV
                                                     ├─ F9  → Cancela venda atual
+                                                    ├─ F10 → Configuracoes → PDV (ESC)
                                                     ├─ Del → Remove item selecionado
                                                     ├─ F12 → FechamentoCaixa → Login
                                                     └─ ESC → Fechar app (so em Login/PDV)
@@ -124,14 +136,15 @@ O `MainWindow.xaml` tem DataTemplates que mapeiam cada ViewModel para sua View:
 [ObservableProperty]
 private ObservableObject? _telaAtual;
 
-// MainWindow.xaml — 7 DataTemplates:
-<DataTemplate DataType="{x:Type vm:LoginViewModel}">         → LoginView
-<DataTemplate DataType="{x:Type vm:PDVViewModel}">           → PDVView
-<DataTemplate DataType="{x:Type vm:AberturaCaixaViewModel}"> → AberturaCaixaView
-<DataTemplate DataType="{x:Type vm:PagamentoViewModel}">     → PagamentoView
-<DataTemplate DataType="{x:Type vm:ConsultaProdutoViewModel}"> → ConsultaProdutoView
-<DataTemplate DataType="{x:Type vm:SangriaSuprimentoViewModel}"> → SangriaSuprimentoView
-<DataTemplate DataType="{x:Type vm:FechamentoCaixaViewModel}"> → FechamentoCaixaView
+// MainWindow.xaml — 8 DataTemplates:
+<DataTemplate DataType="{x:Type vm:LoginViewModel}">              → LoginView
+<DataTemplate DataType="{x:Type vm:PDVViewModel}">                → PDVView
+<DataTemplate DataType="{x:Type vm:AberturaCaixaViewModel}">      → AberturaCaixaView
+<DataTemplate DataType="{x:Type vm:PagamentoViewModel}">          → PagamentoView
+<DataTemplate DataType="{x:Type vm:ConsultaProdutoViewModel}">    → ConsultaProdutoView
+<DataTemplate DataType="{x:Type vm:SangriaSuprimentoViewModel}">  → SangriaSuprimentoView
+<DataTemplate DataType="{x:Type vm:FechamentoCaixaViewModel}">    → FechamentoCaixaView
+<DataTemplate DataType="{x:Type vm:ConfiguracoesViewModel}">      → ConfiguracoesView
 ```
 
 ### Callbacks entre ViewModels
@@ -156,8 +169,61 @@ public Action<decimal>? SolicitarPagamento { get; set; }  // F2 → PagamentoVie
 public Action? SolicitarConsulta { get; set; }             // F4 → ConsultaProdutoView
 public Action? SolicitarSangria { get; set; }              // F5 → SangriaSuprimentoView
 public Action? SolicitarSuprimento { get; set; }           // F6 → SangriaSuprimentoView
+public Action? SolicitarConfiguracoes { get; set; }        // F10 → ConfiguracoesView
 public Action? SolicitarFechamento { get; set; }           // F12 → FechamentoCaixaView
 ```
+
+## Temas Visuais — SAP Fiori Horizon
+
+O sistema suporta 2 temas, trocaveis em runtime via `ThemeManager.ApplyTheme()`:
+
+| Tema | Arquivo | Tipo |
+|------|---------|------|
+| Morning Horizon | `Colors.MorningHorizon.xaml` | Light |
+| Evening Horizon | `Colors.EveningHorizon.xaml` | Dark |
+
+Troca feita pela tela de Configuracoes (F10) via RadioButtons.
+
+### Paleta Evening Horizon (Dark)
+
+| Cor | Hex | Uso |
+|-----|-----|-----|
+| Background | `#111920` | Fundo geral |
+| Shell | `#1A2733` | Header/footer |
+| Surface | `#243342` | Cards |
+| SurfaceLight | `#2C3E50` | Inputs, hover |
+| Primary | `#4BA3F5` | Acoes principais |
+| Positive | `#4CAF50` | Confirmar, sucesso |
+| Negative | `#EF5350` | Cancelar, erro |
+| Critical | `#FF9800` | Atencao (sangria) |
+| Text | `#ECF0F4` | Texto principal |
+| TextSecondary | `#7E91A5` | Labels, hints |
+
+### Estilos reutilizaveis (Controls.xaml)
+
+- **Botoes:** BotaoPDV, BotaoPositive, BotaoNegative, BotaoCritical, BotaoNeutral, BotaoGhost, BotaoFuncao
+- **Inputs:** TextBoxPDV, PasswordBoxPDV, RadioPDV
+- **DataGrid:** DataGridPDV, FioriColumnHeader, FioriDataGridRow, FioriDataGridCell
+- **Texto:** LabelPDV, TituloPDV, SubtituloPDV
+- **Layout:** CardPDV
+- **Globais:** ScrollBar (thumb arredondado), ToolTip (fundo escuro), ProgressBar (Fiori)
+
+## Melhorias de UX implementadas
+
+| # | Melhoria | Onde |
+|---|----------|------|
+| 1 | Empty state no DataGrid — "Leia um codigo de barras para iniciar" | PDVView |
+| 2 | Loading overlay com ProgressBar quando Processando=true | PDVView |
+| 3 | ScrollBar dark com thumb arredondado | Controls.xaml (global) |
+| 4 | ToolTip dark com fundo escuro e sombra | Controls.xaml (global) |
+| 5 | Botoes de valor rapido (R$50/100/200) | SangriaSuprimentoView |
+| 6 | Editar quantidade inline (duplo-clique na coluna QTD) | PDVView + PDVViewModel |
+| 7 | Saldo atual do caixa visivel | SangriaSuprimentoView |
+| 8 | Estoque baixo (<= 5) em vermelho | ConsultaProdutoView |
+| 9 | Historico ultimas 10 movimentacoes | SangriaSuprimentoView |
+| 10 | ProgressBar estilizada Fiori | Controls.xaml (global) |
+| 11 | Tela de Configuracoes (F10) — tema + infos sistema | ConfiguracoesView |
+| 12 | Login redesenhado — layout split com branding MAINTEC | LoginView |
 
 ## Pacotes NuGet
 
@@ -197,7 +263,7 @@ Singleton:  ApiConfig, ImpressoraConfig, MainViewModel,
 Transient:  PdvDbContext, LoginViewModel, PDVViewModel,
             AberturaCaixaViewModel, PagamentoViewModel,
             ConsultaProdutoViewModel, SangriaSuprimentoViewModel,
-            FechamentoCaixaViewModel,
+            FechamentoCaixaViewModel, ConfiguracoesViewModel,
             IVendaService, ICaixaService, IProdutoService
 
 HttpClient: IApiClient → ErpApiClient
@@ -224,30 +290,6 @@ Propriedades computadas ignoradas no mapeamento:
   Caixa.Diferenca, Caixa.Aberto
 ```
 
-## Tema Visual — SAP Fiori Horizon Dark
-
-Definido em `Themes/Fiori/Colors.xaml`:
-
-| Cor | Hex | Uso |
-|-----|-----|-----|
-| Background | `#111920` | Fundo geral |
-| Shell | `#1A2733` | Header/footer |
-| Surface | `#243342` | Cards |
-| SurfaceLight | `#2C3E50` | Inputs, hover |
-| Primary | `#4BA3F5` | Acoes principais |
-| Positive | `#4CAF50` | Confirmar, sucesso |
-| Negative | `#EF5350` | Cancelar, erro |
-| Critical | `#FF9800` | Atencao (sangria) |
-| Text | `#ECF0F4` | Texto principal |
-| TextSecondary | `#7E91A5` | Labels, hints |
-
-Estilos reutilizaveis em `Controls.xaml`:
-- **Botoes:** BotaoPDV, BotaoPositive, BotaoNegative, BotaoCritical, BotaoNeutral, BotaoGhost, BotaoFuncao
-- **Inputs:** TextBoxPDV, PasswordBoxPDV, RadioPDV
-- **DataGrid:** DataGridPDV, FioriColumnHeader, FioriDataGridRow, FioriDataGridCell
-- **Texto:** LabelPDV, TituloPDV, SubtituloPDV
-- **Layout:** CardPDV
-
 ## Fluxo Principal
 
 ```
@@ -256,14 +298,15 @@ Estilos reutilizaveis em `Controls.xaml`:
    Se ja tem caixa aberto → Vai direto pro PDV
 3. Loop de vendas:
    a. Le codigo de barras / busca produto (ou F4 para consulta)
-   b. Adiciona item a venda (com quantidade)
+   b. Adiciona item a venda (com quantidade, editavel inline)
    c. Finaliza venda (F2) → Tela de Pagamento (split payment)
    d. Processa pagamento (Dinheiro com troco / Cartao via TEF / PIX)
    e. Emite NFC-e → SEFAZ (stub em dev)
    f. Imprime cupom na termica
    g. Sincroniza com ERP via API (background, nao trava)
-4. Sangria (F5) / Suprimento (F6) durante o dia
-5. Fechamento de caixa (F12) → Resumo financeiro + contagem → Volta ao Login
+4. Sangria (F5) / Suprimento (F6) — com saldo visivel e historico
+5. Configuracoes (F10) — troca de tema, infos do sistema
+6. Fechamento de caixa (F12) → Resumo financeiro + contagem → Volta ao Login
 ```
 
 ## Como Rodar
@@ -281,17 +324,21 @@ dotnet run --project src\PDV.App
 3. ✅ LocalDbContext + Services (Venda, Caixa, Produto, Operador)
 4. ✅ Stubs NFCe/TEF para desenvolvimento
 5. ✅ PDVView + PDVViewModel (tela principal do caixa)
-6. ✅ Tema Fiori Dark (Colors + Controls)
+6. ✅ Tema Fiori (Morning Horizon light + Evening Horizon dark)
 7. ✅ AberturaCaixaView (abertura de caixa apos login)
 8. ✅ PagamentoView (split payment, troco, parcelas)
-9. ✅ ConsultaProdutoView (busca + selecao de produto)
-10. ✅ SangriaSuprimentoView (sangria e suprimento, mesma view)
+9. ✅ ConsultaProdutoView (busca + selecao + estoque baixo)
+10. ✅ SangriaSuprimentoView (saldo + valor rapido + historico)
 11. ✅ FechamentoCaixaView (resumo financeiro + contagem)
-12. ✅ Navegacao completa com callbacks (F2/F4/F5/F6/F12/ESC)
-13. ⬜ Fiscal: NFCeService real (ACBrLib)
-14. ⬜ TEF: TEFService real (SiTef/PayGo)
-15. ⬜ SyncManager (fila offline → ERP)
-16. ⬜ Testes
+12. ✅ Navegacao completa com callbacks (F2/F4/F5/F6/F10/F12/ESC)
+13. ✅ ConfiguracoesView (troca de tema + infos sistema)
+14. ✅ Melhorias UX (empty state, loading overlay, inline edit, etc.)
+15. ✅ Redesign tela de login (layout split com branding MAINTEC)
+16. ✅ Controles globais temados (ScrollBar, ToolTip, ProgressBar)
+17. ⬜ Fiscal: NFCeService real (ACBrLib)
+18. ⬜ TEF: TEFService real (SiTef/PayGo)
+19. ⬜ SyncManager (fila offline → ERP)
+20. ⬜ Testes
 
 ## Ambiente
 
@@ -299,4 +346,5 @@ dotnet run --project src\PDV.App
 - Target: net8.0-windows (WPF)
 - OS Dev: Ubuntu 24.04 WSL2 (EnableWindowsTargeting=true)
 - OS Run: Windows (PowerShell)
-- Build: dotnet build PDV.sln ✅ 0 erros, 0 warnings
+- Build: dotnet build PDV.sln ✅ 0 erros
+- Repo: https://github.com/Lucas-Braun/MAINTEC_PDV.git
