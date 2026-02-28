@@ -5,6 +5,7 @@
 
     <UserControl.InputBindings>
         <KeyBinding Key="Escape" Command="{Binding VoltarCommand}"/>
+        <KeyBinding Key="F2" Command="{Binding ConfirmarCommand}"/>
     </UserControl.InputBindings>
 
     <Grid Margin="20">
@@ -283,8 +284,9 @@
                        FontSize="12" Margin="5,0,0,8"
                        Visibility="{Binding MensagemStatus, Converter={StaticResource StringToVisibility}}"/>
 
-            <!-- Botoes -->
-            <Grid Grid.Row="3">
+            <!-- Botoes: VOLTAR + ADICIONAR (quando ainda falta pagar) -->
+            <Grid Grid.Row="3"
+                  Visibility="{Binding PodeConfirmar, Converter={StaticResource InvertBoolToVisibility}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
@@ -303,14 +305,13 @@
                         Margin="5,0,0,0"/>
             </Grid>
 
-            <!-- Botao confirmar (aparece quando pagamento completo) -->
+            <!-- Botao confirmar (quando pagamento completo) -->
             <Button Grid.Row="3"
-                    Content="CONFIRMAR PAGAMENTO"
+                    Content="CONFIRMAR PAGAMENTO (ENTER)"
                     Command="{Binding ConfirmarCommand}"
                     Style="{DynamicResource BotaoPositive}"
                     FontSize="16" Height="48"
                     Visibility="{Binding PodeConfirmar, Converter={StaticResource BoolToVisibility}}"
-                    Panel.ZIndex="10"
                     Margin="0,0,0,0"/>
         </Grid>
     </Grid>

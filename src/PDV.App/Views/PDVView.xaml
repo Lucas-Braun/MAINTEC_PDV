@@ -498,59 +498,5 @@
             </StackPanel>
         </Grid>
 
-        <!-- ============================================= -->
-        <!-- OVERLAY DE SUCESSO (apos finalizar venda)     -->
-        <!-- ============================================= -->
-        <Grid Grid.RowSpan="3" Panel.ZIndex="100"
-              Visibility="Collapsed"
-              x:Name="OverlaySucesso">
-            <Grid.Style>
-                <Style TargetType="Grid">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding MostrarSucesso}" Value="True">
-                            <Setter Property="Visibility" Value="Visible" />
-                            <DataTrigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                         From="0" To="1" Duration="0:0:0.3" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </DataTrigger.EnterActions>
-                            <DataTrigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                         From="1" To="0" Duration="0:0:0.4" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </DataTrigger.ExitActions>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Grid.Style>
-
-            <!-- Fundo semi-transparente verde -->
-            <Border Background="{DynamicResource OverlaySuccessBrush}" CornerRadius="0" />
-
-            <!-- Conteudo centralizado -->
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="&#x2713;"
-                           FontSize="120" FontWeight="Bold"
-                           Foreground="White"
-                           HorizontalAlignment="Center" />
-                <TextBlock Text="VENDA FINALIZADA"
-                           FontSize="28" FontWeight="Bold"
-                           Foreground="White"
-                           HorizontalAlignment="Center"
-                           Margin="0,10,0,0" />
-                <TextBlock Text="{Binding MensagemSucesso}"
-                           FontSize="22"
-                           Foreground="#DDFFFFFF"
-                           HorizontalAlignment="Center"
-                           TextAlignment="Center"
-                           Margin="0,10,0,0" />
-            </StackPanel>
-        </Grid>
     </Grid>
 </UserControl>

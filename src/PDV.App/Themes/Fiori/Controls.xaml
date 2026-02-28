@@ -516,6 +516,21 @@
     </Style>
 
     <!-- ===================================================== -->
+    <!-- COMBOBOX                                              -->
+    <!-- ===================================================== -->
+
+    <Style x:Key="ComboBoxPDV" TargetType="ComboBox">
+        <Setter Property="Background" Value="{DynamicResource SurfaceLightBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="MinHeight" Value="36"/>
+    </Style>
+
+    <!-- ===================================================== -->
     <!-- CARD BORDER (container padrao)                         -->
     <!-- ===================================================== -->
 

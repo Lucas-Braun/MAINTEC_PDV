@@ -58,6 +58,7 @@ public partial class MainViewModel : ObservableObject
         pdvVm.SolicitarSuprimento = () => NavegarParaSangriaSuprimento(TipoMovimentoCaixa.Suprimento);
         pdvVm.SolicitarFechamento = NavegarParaFechamentoCaixa;
         pdvVm.SolicitarConfiguracoes = () => NavegarParaConfiguracoes();
+        pdvVm.VendaFinalizada = NavegarParaComprovante;
     }
 
     private async void OnLoginSucesso(string nomeOperador)
@@ -153,6 +154,18 @@ public partial class MainViewModel : ObservableObject
 
         vm.CaixaFechado = () => NavegarParaLogin();
         vm.Cancelado = () => TelaAtual = _pdvVmAtual;
+        TelaAtual = vm;
+    }
+
+    private void NavegarParaComprovante(Venda venda)
+    {
+        var vm = _services.GetRequiredService<ComprovanteViewModel>();
+        vm.Venda = venda;
+        vm.Voltar = () =>
+        {
+            _pdvVmAtual?.NovaVenda();
+            NavegarParaPDV();
+        };
         TelaAtual = vm;
     }
 

@@ -19,14 +19,8 @@ public partial class PDVView : UserControl
 
         Dispatcher.BeginInvoke(new Action(() =>
         {
-            if (sender is DataGrid dg)
-            {
-                ICollectionView view = CollectionViewSource.GetDefaultView(dg.ItemsSource);
-                view?.Refresh();
-            }
-
             if (DataContext is PDVViewModel vm)
                 vm.AtualizarAposEdicaoQuantidade();
-        }), DispatcherPriority.Background);
+        }), DispatcherPriority.ApplicationIdle);
     }
 }

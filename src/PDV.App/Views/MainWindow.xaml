@@ -35,6 +35,9 @@
         <DataTemplate DataType="{x:Type vm:ConfiguracoesViewModel}">
             <views:ConfiguracoesView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ComprovanteViewModel}">
+            <views:ComprovanteView/>
+        </DataTemplate>
     </Window.Resources>
 
     <Grid>

@@ -9,5 +9,6 @@ public interface IImpressoraService
     Task ImprimirFechamentoCaixa(Caixa caixa);
     Task AbrirGaveta();
     Task CortarPapel();
+    Task EnviarRaw(byte[] dados);
     bool VerificarConexao();
 }

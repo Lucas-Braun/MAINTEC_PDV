@@ -23,6 +23,15 @@ public class InvertBoolConverter : IValueConverter
         => value is bool b ? !b : true;
 }
 
+public class InvertBoolToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true ? Visibility.Collapsed : Visibility.Visible;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is Visibility.Collapsed;
+}
+
 public class StringToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

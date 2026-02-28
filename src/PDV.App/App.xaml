@@ -13,6 +13,7 @@
             <!-- Converters globais -->
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
             <conv:InvertBoolConverter x:Key="InvertBool"/>
+            <conv:InvertBoolToVisibilityConverter x:Key="InvertBoolToVisibility"/>
             <conv:StringToVisibilityConverter x:Key="StringToVisibility"/>
             <conv:BoolToStatusColorConverter x:Key="BoolToStatusColor"/>
             <conv:BoolToConnectionTextConverter x:Key="BoolToConnectionText"/>

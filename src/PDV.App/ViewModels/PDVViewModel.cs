@@ -54,6 +54,7 @@ public partial class PDVViewModel : ObservableObject
     public Action? SolicitarSuprimento { get; set; }
     public Action? SolicitarFechamento { get; set; }
     public Action? SolicitarConfiguracoes { get; set; }
+    public Action<Venda>? VendaFinalizada { get; set; }
 
     // =========================================
     // PROPRIEDADES OBSERVAVEIS
@@ -88,12 +89,6 @@ public partial class PDVViewModel : ObservableObject
 
     [ObservableProperty]
     private string _dataHoraAtual = DateTime.Now.ToString("dd/MM/yyyy  HH:mm:ss");
-
-    [ObservableProperty]
-    private bool _mostrarSucesso = false;
-
-    [ObservableProperty]
-    private string _mensagemSucesso = string.Empty;
 
     [ObservableProperty]
     private string _ultimoItemDescricao = string.Empty;
@@ -280,9 +275,16 @@ public partial class PDVViewModel : ObservableObject
                 MensagemStatus = "NFC-e em contingencia - sera enviada depois";
             }
 
-            // 4. Imprime cupom
-            MensagemStatus = "Imprimindo cupom...";
-            await _impressoraService.ImprimirCupom(VendaAtual);
+            // 4. Imprime cupom (nao deve impedir a venda)
+            try
+            {
+                MensagemStatus = "Imprimindo cupom...";
+                await _impressoraService.ImprimirCupom(VendaAtual);
+            }
+            catch
+            {
+                // Impressora indisponivel - venda ja foi salva
+            }
 
             // 5. Sincroniza com ERP em background
             _ = Task.Run(async () =>
@@ -299,19 +301,9 @@ public partial class PDVViewModel : ObservableObject
                 }
             });
 
-            // 6. Overlay de sucesso
-            MensagemSucesso = $"Venda #{VendaAtual.NumeroVenda}\n{VendaAtual.ValorTotal:C2}";
-            MostrarSucesso = true;
-
+            // 6. Navega para tela de comprovante
             MensagemStatus = $"Venda #{VendaAtual.NumeroVenda} finalizada! Total: {VendaAtual.ValorTotal:C2}";
-            NovaVenda();
-
-            // Esconde overlay apos 2 segundos
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(2000);
-                System.Windows.Application.Current.Dispatcher.Invoke(() => MostrarSucesso = false);
-            });
+            VendaFinalizada?.Invoke(VendaAtual);
         }
         catch (Exception ex)
         {
@@ -377,7 +369,7 @@ public partial class PDVViewModel : ObservableObject
     // METODOS AUXILIARES
     // =========================================
 
-    private void NovaVenda()
+    public void NovaVenda()
     {
         VendaAtual = new Venda();
         Itens.Clear();
