@@ -1,6 +1,6 @@
-# MAINTEC PDV — Estrutura do Projeto
+# MEINTEC PDV — Estrutura do Projeto
 
-## Status: Solution compilando e rodando (.NET 8.0) — 9 telas, 2 temas, ESCPOS_NET, Instalador, GitHub
+## Status: Solution compilando e rodando (.NET 8.0) — 9 telas, 2 temas, ESCPOS_NET, Instalador, Icone + Splash, GitHub
 
 **Repositorio:** https://github.com/Lucas-Braun/MAINTEC_PDV.git
 
@@ -14,8 +14,8 @@ installer.iss                          ✅ Script Inno Setup (gera setup.exe PT-
 ├── src/
 │   ├── PDV.App/                        # Projeto WPF Principal (UI)
 │   │   ├── App.xaml / App.xaml.cs      ✅ DI completo + SQLite auto-create +
-│   │   │                                 CodePagesEncodingProvider + ConfiguracoesService +
-│   │   │                                 ThemeManager.ApplyTheme no startup
+│   │   │                                 SplashScreen + CodePagesEncodingProvider +
+│   │   │                                 ConfiguracoesService + ThemeManager.ApplyTheme
 │   │   ├── Themes/
 │   │   │   ├── FioriTheme.xaml         ✅ Tema ativo (merge Colors + Controls)
 │   │   │   ├── ThemeManager.cs         ✅ Troca de tema em runtime (ApplyTheme/CurrentTheme)
@@ -27,11 +27,14 @@ installer.iss                          ✅ Script Inno Setup (gera setup.exe PT-
 │   │   │       └── Controls.xaml       ✅ BotaoPDV, TextBoxPDV, DataGridPDV,
 │   │   │                                  RadioPDV, CardPDV, BotaoFuncao,
 │   │   │                                  ScrollBar, ToolTip, ProgressBar (todos temados)
+│   │   ├── Assets/
+│   │   │   ├── app.ico                ✅ Icone multi-res (16/32/48/256) — "M" azul #4BA3F5
+│   │   │   └── splash.png             ✅ Splash screen 600x340 — fundo #111920, logo MEINTEC
 │   │   ├── Controls/
 │   │   │   └── FadeContentControl.cs   ✅ Transicao animada entre telas
 │   │   ├── Views/
 │   │   │   ├── MainWindow.xaml/.cs     ✅ Shell fullscreen + DataTemplates (9 telas)
-│   │   │   ├── LoginView.xaml/.cs      ✅ Layout split: branding MAINTEC + formulario
+│   │   │   ├── LoginView.xaml/.cs      ✅ Layout split: branding MEINTEC + formulario
 │   │   │   ├── PDVView.xaml/.cs        ✅ Tela principal + F-keys + empty state +
 │   │   │   │                              loading overlay + edicao QTD inline
 │   │   │   ├── AberturaCaixaView.xaml/.cs    ✅ Card: numero caixa + valor abertura
@@ -230,10 +233,11 @@ Troca feita pela tela de Configuracoes (F10) via RadioButtons.
 | 9 | Historico ultimas 10 movimentacoes | SangriaSuprimentoView |
 | 10 | ProgressBar estilizada Fiori | Controls.xaml (global) |
 | 11 | Tela de Configuracoes (F10) — tema + impressora + infos | ConfiguracoesView |
-| 12 | Login redesenhado — layout split com branding MAINTEC | LoginView |
+| 12 | Login redesenhado — layout split com branding MEINTEC | LoginView |
 | 13 | Comprovante TEF — exibicao de comprovantes | ComprovanteView |
 | 14 | Config impressora persistida em JSON | ConfiguracoesService |
 | 15 | ESCPOS_NET — emitter EPSON substitui bytes hardcoded | CupomBuilder |
+| 16 | Icone customizado multi-res ("M" azul) + splash screen MEINTEC | Assets, App.xaml.cs |
 
 ## Pacotes NuGet
 
@@ -338,7 +342,7 @@ dotnet publish src/PDV.App/PDV.App.csproj -c Release -r win-x64 --self-contained
 # 2. Compilar installer.iss (requer Inno Setup instalado)
 "C:\InnoSetup\ISCC.exe" installer.iss
 
-# Saida: installer_output/MAINTEC_PDV_Setup_1.0.0.exe (~51 MB)
+# Saida: installer_output/MEINTEC_PDV_Setup_1.0.0.exe (~51 MB)
 ```
 
 ## Proximos Passos
@@ -357,13 +361,14 @@ dotnet publish src/PDV.App/PDV.App.csproj -c Release -r win-x64 --self-contained
 12. ✅ Navegacao completa com callbacks (F2/F4/F5/F6/F10/F12/ESC)
 13. ✅ ConfiguracoesView (troca de tema + infos sistema)
 14. ✅ Melhorias UX (empty state, loading overlay, inline edit, etc.)
-15. ✅ Redesign tela de login (layout split com branding MAINTEC)
+15. ✅ Redesign tela de login (layout split com branding MEINTEC)
 16. ✅ Controles globais temados (ScrollBar, ToolTip, ProgressBar)
 17. ✅ ConfiguracoesService — persistencia JSON de config
 18. ✅ ComprovanteView — exibicao de comprovantes TEF
 19. ✅ ESCPOS_NET — emitter EPSON no CupomBuilder e ImpressoraService
 20. ✅ Instalador Inno Setup — setup.exe self-contained PT-BR (~51 MB)
-21. ⬜ Fiscal: NFCeService real (ACBrLib)
+21. ✅ Icone customizado + splash screen + branding MEINTEC
+22. ⬜ Fiscal: NFCeService real (ACBrLib)
 21. ⬜ TEF: TEFService real (SiTef/PayGo)
 22. ⬜ SyncManager (fila offline → ERP)
 23. ⬜ Testes

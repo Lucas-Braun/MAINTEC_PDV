@@ -24,6 +24,9 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        var splash = new SplashScreen("Assets/splash.png");
+        splash.Show(false);
+
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
         var services = new ServiceCollection();
@@ -113,6 +116,8 @@ public partial class App : Application
 
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show();
+
+        splash.Close(TimeSpan.FromMilliseconds(300));
 
         // Aplicar tema salvo
         ThemeManager.ApplyTheme(configApp.Tema);

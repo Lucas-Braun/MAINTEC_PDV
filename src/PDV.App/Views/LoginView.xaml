@@ -48,7 +48,7 @@
                     </Border>
 
                     <!-- Nome do sistema -->
-                    <TextBlock Text="MAINTEC"
+                    <TextBlock Text="MEINTEC"
                                FontSize="48" FontWeight="ExtraBold"
                                Foreground="{DynamicResource TextBrush}"
                                HorizontalAlignment="Center"

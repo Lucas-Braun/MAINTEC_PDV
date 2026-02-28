@@ -5,6 +5,7 @@
         xmlns:views="clr-namespace:PDV.App.Views"
         xmlns:controls="clr-namespace:PDV.App.Controls"
         Title="PDV - Ponto de Venda"
+        Icon="Assets/app.ico"
         WindowState="Maximized"
         WindowStyle="None"
         Background="{DynamicResource BackgroundBrush}"

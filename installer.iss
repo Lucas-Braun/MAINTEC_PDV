@@ -1,9 +1,9 @@
-; MAINTEC PDV - Inno Setup Script
+; MEINTEC PDV - Inno Setup Script
 ; Para compilar: abra este arquivo no Inno Setup e clique em Build > Compile
 
-#define MyAppName "MAINTEC PDV"
+#define MyAppName "MEINTEC PDV"
 #define MyAppVersion "1.0.0"
-#define MyAppPublisher "MAINTEC"
+#define MyAppPublisher "MEINTEC"
 #define MyAppExeName "PDV.exe"
 #define MyAppURL "https://github.com/Lucas-Braun/MAINTEC_PDV"
 
@@ -16,10 +16,9 @@ AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
-; Icone do instalador (descomente e ajuste se tiver um .ico)
-; SetupIconFile=src\PDV.App\Assets\icon.ico
+SetupIconFile=src\PDV.App\Assets\app.ico
 OutputDir=installer_output
-OutputBaseFilename=MAINTEC_PDV_Setup_{#MyAppVersion}
+OutputBaseFilename=MEINTEC_PDV_Setup_{#MyAppVersion}
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
