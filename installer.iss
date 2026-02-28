@@ -26,7 +26,6 @@ WizardStyle=modern
 PrivilegesRequired=admin
 ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
-LicenseFile=
 ; Tamanho minimo de tela
 MinVersion=10.0
 
@@ -34,8 +33,8 @@ MinVersion=10.0
 Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "Criar atalho na &Area de Trabalho"; GroupDescription: "Atalhos:"; Flags: checked
-Name: "startupicon"; Description: "Iniciar com o &Windows"; GroupDescription: "Atalhos:"; Flags: unchecked
+Name: "desktopicon"; Description: "Criar atalho na &Area de Trabalho"; GroupDescription: "Atalhos:"
+Name: "startupicon"; Description: "Iniciar com o &Windows"; GroupDescription: "Atalhos:"
 
 [Files]
 ; Copia tudo da pasta publish
