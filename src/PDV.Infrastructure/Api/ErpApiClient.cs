@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using PDV.Core.Enums;
 using PDV.Core.Interfaces;
 using PDV.Core.Models;
 using PDV.Infrastructure.Api.DTOs;
@@ -419,6 +420,39 @@ public class ErpApiClient : IApiClient
         catch (Exception ex)
         {
             return new ResultadoResumoCaixa { Sucesso = false, Erro = ex.Message };
+        }
+    }
+
+    public async Task<List<MovimentoCaixa>> ObterMovimentosCaixa(int limite = 10)
+    {
+        try
+        {
+            using var request = CriarRequest(HttpMethod.Get, $"{_prefix}/caixa/movimentos?limit={limite}");
+            var response = await _httpClient.SendAsync(request);
+
+            var json = await response.Content.ReadAsStringAsync();
+            var dto = JsonSerializer.Deserialize<MovimentosCaixaResponse>(json, _jsonOptions);
+
+            if (dto?.Success != true || dto.Movimentos == null)
+                return new List<MovimentoCaixa>();
+
+            return dto.Movimentos.Select(m => new MovimentoCaixa
+            {
+                Id = m.MovInCodigo,
+                Valor = m.Valor,
+                Observacao = m.Observacao,
+                DataHora = DateTime.TryParse(m.DataCriado, out var dt) ? dt : DateTime.Now,
+                Tipo = m.Tipo switch
+                {
+                    "SA" => TipoMovimentoCaixa.Sangria,
+                    "SU" => TipoMovimentoCaixa.Suprimento,
+                    _ => TipoMovimentoCaixa.Sangria
+                }
+            }).ToList();
+        }
+        catch
+        {
+            return new List<MovimentoCaixa>();
         }
     }
 

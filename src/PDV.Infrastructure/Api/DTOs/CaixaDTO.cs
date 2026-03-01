@@ -164,6 +164,36 @@ public class ResumoTotaisDTO
     public decimal Pix { get; set; }
 }
 
+public class MovimentosCaixaResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("movimentos")]
+    public List<MovimentoCaixaDTO> Movimentos { get; set; } = new();
+
+    [JsonPropertyName("error")]
+    public string? Error { get; set; }
+}
+
+public class MovimentoCaixaDTO
+{
+    [JsonPropertyName("mov_in_codigo")]
+    public int MovInCodigo { get; set; }
+
+    [JsonPropertyName("mov_st_tipo")]
+    public string Tipo { get; set; } = string.Empty;
+
+    [JsonPropertyName("mov_re_valor")]
+    public decimal Valor { get; set; }
+
+    [JsonPropertyName("mov_st_observacao")]
+    public string? Observacao { get; set; }
+
+    [JsonPropertyName("mov_dt_criado")]
+    public string? DataCriado { get; set; }
+}
+
 public class ConfigTerminalResponse
 {
     [JsonPropertyName("success")]

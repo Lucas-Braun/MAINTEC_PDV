@@ -2,16 +2,20 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PDV.Core.Enums;
 using PDV.Core.Interfaces;
+using PDV.Core.Models;
+using System.Collections.ObjectModel;
 
 namespace PDV.App.ViewModels;
 
 public partial class SangriaSuprimentoViewModel : ObservableObject
 {
     private readonly ICaixaService _caixaService;
+    private readonly IApiClient _apiClient;
 
-    public SangriaSuprimentoViewModel(ICaixaService caixaService)
+    public SangriaSuprimentoViewModel(ICaixaService caixaService, IApiClient apiClient)
     {
         _caixaService = caixaService;
+        _apiClient = apiClient;
     }
 
     // Callbacks
@@ -33,6 +37,14 @@ public partial class SangriaSuprimentoViewModel : ObservableObject
     [ObservableProperty]
     private bool _processando = false;
 
+    [ObservableProperty]
+    private decimal _saldoCaixa;
+
+    [ObservableProperty]
+    private ObservableCollection<MovimentoExibicao> _movimentos = new();
+
+    public bool TemMovimentos => Movimentos.Count > 0;
+
     // Titulo dinamico baseado no tipo
     public string Titulo => Tipo == TipoMovimentoCaixa.Sangria ? "SANGRIA" : "SUPRIMENTO";
     public string Descricao => Tipo == TipoMovimentoCaixa.Sangria
@@ -43,6 +55,29 @@ public partial class SangriaSuprimentoViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(Titulo));
         OnPropertyChanged(nameof(Descricao));
+    }
+
+    public async Task CarregarDados()
+    {
+        try
+        {
+            var resumo = await _caixaService.ObterResumoCaixa();
+            if (resumo.Sucesso)
+                SaldoCaixa = resumo.SaldoAtual;
+
+            var movimentos = await _apiClient.ObterMovimentosCaixa(10);
+            Movimentos = new ObservableCollection<MovimentoExibicao>(
+                movimentos
+                    .Where(m => m.Tipo == TipoMovimentoCaixa.Sangria || m.Tipo == TipoMovimentoCaixa.Suprimento)
+                    .Select(m => new MovimentoExibicao
+                    {
+                        DataHora = m.DataHora,
+                        Tipo = m.Tipo == TipoMovimentoCaixa.Sangria ? "Sangria" : "Suprimento",
+                        Valor = m.Valor
+                    }));
+            OnPropertyChanged(nameof(TemMovimentos));
+        }
+        catch { /* silencioso - dados opcionais */ }
     }
 
     [RelayCommand]
@@ -96,4 +131,11 @@ public partial class SangriaSuprimentoViewModel : ObservableObject
     {
         Cancelado?.Invoke();
     }
+}
+
+public class MovimentoExibicao
+{
+    public DateTime DataHora { get; set; }
+    public string Tipo { get; set; } = string.Empty;
+    public decimal Valor { get; set; }
 }

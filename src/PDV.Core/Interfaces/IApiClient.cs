@@ -21,6 +21,7 @@ public interface IApiClient
     Task<ResultadoOperacao> RegistrarSangria(decimal valor, string? observacao);
     Task<ResultadoOperacao> RegistrarSuprimento(decimal valor, string? observacao);
     Task<ResultadoResumoCaixa> ObterResumoCaixa();
+    Task<List<MovimentoCaixa>> ObterMovimentosCaixa(int limite = 10);
 
     // Produto
     Task<Produto?> BuscarProdutoPorCodigo(string codigo);

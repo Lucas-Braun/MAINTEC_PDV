@@ -159,6 +159,7 @@ public partial class MainViewModel : ObservableObject
         };
         vm.Cancelado = () => TelaAtual = _pdvVmAtual;
         TelaAtual = vm;
+        _ = vm.CarregarDados();
     }
 
     private void NavegarParaFechamentoCaixa()
