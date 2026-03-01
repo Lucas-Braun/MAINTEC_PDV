@@ -6,6 +6,8 @@ using PDV.Core.Enums;
 using PDV.Core.Interfaces;
 using PDV.Core.Models;
 using PDV.Infrastructure.Api.DTOs;
+using Polly;
+using Polly.Retry;
 
 namespace PDV.Infrastructure.Api;
 
@@ -15,6 +17,7 @@ public class ErpApiClient : IApiClient
     private readonly ISessaoService _sessao;
     private readonly string _prefix;
     private readonly JsonSerializerOptions _jsonOptions;
+    private readonly ResiliencePipeline _retryPipeline;
 
     public ErpApiClient(HttpClient httpClient, ErpApiConfig config, ISessaoService sessao)
     {
@@ -26,6 +29,19 @@ public class ErpApiClient : IApiClient
         {
             PropertyNameCaseInsensitive = true
         };
+
+        // Retry: 3 tentativas com backoff exponencial (0.5s, 1s, 2s)
+        _retryPipeline = new ResiliencePipelineBuilder()
+            .AddRetry(new RetryStrategyOptions
+            {
+                MaxRetryAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500),
+                BackoffType = DelayBackoffType.Exponential,
+                ShouldHandle = new PredicateBuilder()
+                    .Handle<HttpRequestException>()
+                    .Handle<TaskCanceledException>()
+            })
+            .Build();
     }
 
     // ======================== AUTH ========================
@@ -392,8 +408,7 @@ public class ErpApiClient : IApiClient
     {
         try
         {
-            using var request = CriarRequest(HttpMethod.Get, $"{_prefix}/caixa/resumo");
-            var response = await _httpClient.SendAsync(request);
+            var response = await EnviarComRetry(HttpMethod.Get, $"{_prefix}/caixa/resumo");
 
             var json = await response.Content.ReadAsStringAsync();
             var dto = JsonSerializer.Deserialize<ResumoResponse>(json, _jsonOptions);
@@ -462,9 +477,8 @@ public class ErpApiClient : IApiClient
     {
         try
         {
-            using var request = CriarRequest(HttpMethod.Get,
+            var response = await EnviarComRetry(HttpMethod.Get,
                 $"{_prefix}/produto/buscar-codigo?codigo={Uri.EscapeDataString(codigo)}");
-            var response = await _httpClient.SendAsync(request);
 
             var json = await response.Content.ReadAsStringAsync();
 
@@ -484,9 +498,8 @@ public class ErpApiClient : IApiClient
     {
         try
         {
-            using var request = CriarRequest(HttpMethod.Get,
+            var response = await EnviarComRetry(HttpMethod.Get,
                 $"{_prefix}/produto/buscar?q={Uri.EscapeDataString(termo)}&limit={limite}");
-            var response = await _httpClient.SendAsync(request);
 
             var json = await response.Content.ReadAsStringAsync();
 
@@ -529,10 +542,12 @@ public class ErpApiClient : IApiClient
                 Troco = troco
             };
 
-            using var request = CriarRequest(HttpMethod.Post, $"{_prefix}/venda/finalizar-direto", body);
-            request.Headers.Add("X-Idempotency-Key", idempotencyKey);
-
-            var response = await _httpClient.SendAsync(request);
+            var response = await _retryPipeline.ExecuteAsync(async ct =>
+            {
+                using var req = CriarRequest(HttpMethod.Post, $"{_prefix}/venda/finalizar-direto", body);
+                req.Headers.Add("X-Idempotency-Key", idempotencyKey);
+                return await _httpClient.SendAsync(req, ct);
+            });
 
             var json = await response.Content.ReadAsStringAsync();
             var dto = JsonSerializer.Deserialize<FinalizarVendaResponse>(json, _jsonOptions);
@@ -572,8 +587,7 @@ public class ErpApiClient : IApiClient
             if (!string.IsNullOrEmpty(nf))
                 url += $"&nf={Uri.EscapeDataString(nf)}";
 
-            using var request = CriarRequest(HttpMethod.Get, url);
-            var response = await _httpClient.SendAsync(request);
+            var response = await EnviarComRetry(HttpMethod.Get, url);
 
             var json = await response.Content.ReadAsStringAsync();
 
@@ -779,6 +793,15 @@ public class ErpApiClient : IApiClient
     };
 
     // ======================== HELPERS ========================
+
+    private async Task<HttpResponseMessage> EnviarComRetry(HttpMethod method, string url, object? body = null)
+    {
+        return await _retryPipeline.ExecuteAsync(async ct =>
+        {
+            using var request = CriarRequest(method, url, body);
+            return await _httpClient.SendAsync(request, ct);
+        });
+    }
 
     private HttpRequestMessage CriarRequest(HttpMethod method, string url, object? body = null)
     {

@@ -27,6 +27,7 @@
         <KeyBinding Key="Delete" Command="{Binding RemoverItemCommand}" />
         <KeyBinding Key="Add" Command="{Binding IncrementarQuantidadeCommand}" />
         <KeyBinding Key="Subtract" Command="{Binding DecrementarQuantidadeCommand}" />
+        <KeyBinding Key="B" Modifiers="Ctrl" Command="{Binding AbrirBuscaAvancadaCommand}" />
     </UserControl.InputBindings>
 
     <Grid>
@@ -1379,7 +1380,7 @@
 
                     <Separator Background="{DynamicResource SeparatorBrush}" Margin="0,16"/>
 
-                    <TextBlock Text="Dica: use 3*codigo para adicionar 3 unidades"
+                    <TextBlock Text="Ctrl+B = Busca avancada  |  3*codigo = 3 unidades"
                                FontSize="12" FontStyle="Italic"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                HorizontalAlignment="Center"
@@ -1392,6 +1393,115 @@
                             Padding="30,0"
                             HorizontalAlignment="Center"/>
                 </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ============================================= -->
+        <!-- OVERLAY BUSCA AVANCADA DE PRODUTOS            -->
+        <!-- ============================================= -->
+        <Grid Grid.RowSpan="3" Panel.ZIndex="90">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding BuscaAvancadaVisivel}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+
+            <!-- Background escuro -->
+            <Border Background="#99000000"
+                    MouseDown="FecharBuscaAvancada_Click"/>
+
+            <!-- Card central -->
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12" Padding="30"
+                    Width="700" MaxHeight="600"
+                    VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Effect="{DynamicResource CardShadow}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Titulo + Fechar -->
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <TextBlock Text="BUSCA DE PRODUTOS"
+                                   Style="{DynamicResource TituloPDV}"
+                                   FontSize="22"/>
+                        <Button Content="X"
+                                Command="{Binding FecharBuscaAvancadaCommand}"
+                                HorizontalAlignment="Right"
+                                Foreground="{DynamicResource TextSecondaryBrush}"
+                                Background="Transparent" BorderThickness="0"
+                                FontSize="18" FontWeight="Bold"
+                                Cursor="Hand" Padding="4,0"/>
+                    </Grid>
+
+                    <!-- Campo de busca -->
+                    <Grid Grid.Row="1" Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding BuscaAvancadaTermo, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{DynamicResource TextBoxPDV}"
+                                 FontSize="16" Padding="12,10"
+                                 x:Name="TxtBuscaAvancada">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Return" Command="{Binding ExecutarBuscaAvancadaCommand}"/>
+                                <KeyBinding Key="Escape" Command="{Binding FecharBuscaAvancadaCommand}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+
+                        <Button Grid.Column="1" Content="BUSCAR"
+                                Command="{Binding ExecutarBuscaAvancadaCommand}"
+                                Style="{DynamicResource BotaoPDV}"
+                                FontSize="13" Height="42"
+                                Padding="20,0" Margin="8,0,0,0"/>
+                    </Grid>
+
+                    <!-- Grid de resultados -->
+                    <DataGrid Grid.Row="2"
+                              ItemsSource="{Binding ResultadosBusca}"
+                              SelectedItem="{Binding ProdutoBuscaSelecionado}"
+                              Style="{DynamicResource DataGridPDV}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              SelectionMode="Single"
+                              MaxHeight="400"
+                              MouseDoubleClick="BuscaAvancada_DoubleClick">
+                        <DataGrid.InputBindings>
+                            <KeyBinding Key="Return" Command="{Binding SelecionarProdutoBuscaCommand}"
+                                        CommandParameter="{Binding ProdutoBuscaSelecionado}"/>
+                        </DataGrid.InputBindings>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="CODIGO" Width="100"
+                                                Binding="{Binding CodigoInterno}"/>
+                            <DataGridTextColumn Header="DESCRICAO" Width="*"
+                                                Binding="{Binding Descricao}"/>
+                            <DataGridTextColumn Header="UN" Width="50"
+                                                Binding="{Binding UnidadeMedida}"/>
+                            <DataGridTextColumn Header="PRECO" Width="100"
+                                                Binding="{Binding PrecoVenda, StringFormat=C2}">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource PositiveBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="ESTOQUE" Width="80"
+                                                Binding="{Binding EstoqueAtual, StringFormat=N0}"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
             </Border>
         </Grid>
 

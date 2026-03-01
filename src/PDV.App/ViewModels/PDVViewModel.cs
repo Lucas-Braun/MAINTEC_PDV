@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using PDV.Core.Enums;
 using PDV.Core.Models;
 using PDV.Core.Interfaces;
+using PDV.Infrastructure.Services;
 using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Windows.Threading;
@@ -17,6 +18,7 @@ public partial class PDVViewModel : ObservableObject
     private readonly IImpressoraService _impressoraService;
     private readonly ITEFService _tefService;
     private readonly ICaixaService _caixaService;
+    private readonly PdvLogger _logger;
 
     public PDVViewModel(
         IProdutoService produtoService,
@@ -24,7 +26,8 @@ public partial class PDVViewModel : ObservableObject
         ISessaoService sessao,
         IImpressoraService impressoraService,
         ITEFService tefService,
-        ICaixaService caixaService)
+        ICaixaService caixaService,
+        PdvLogger logger)
     {
         _produtoService = produtoService;
         _apiClient = apiClient;
@@ -32,6 +35,7 @@ public partial class PDVViewModel : ObservableObject
         _impressoraService = impressoraService;
         _tefService = tefService;
         _caixaService = caixaService;
+        _logger = logger;
 
         VendaAtual = new Venda();
         Itens = new ObservableCollection<ItemVenda>();
@@ -44,8 +48,11 @@ public partial class PDVViewModel : ObservableObject
         timer.Tick += (_, _) => DataHoraAtual = DateTime.Now.ToString("dd/MM/yyyy  HH:mm:ss");
         timer.Start();
 
-        // Verifica status de conexoes ao iniciar
+        // Verifica status de conexoes ao iniciar + periodicamente (60s)
         _ = VerificarConexoes();
+        var timerConexao = new DispatcherTimer { Interval = TimeSpan.FromSeconds(60) };
+        timerConexao.Tick += async (_, _) => await VerificarConexoes();
+        timerConexao.Start();
     }
 
     // =========================================
@@ -246,6 +253,22 @@ public partial class PDVViewModel : ObservableObject
     // Teclado numerico virtual
     [ObservableProperty]
     private bool _tecladoVisivel;
+
+    // Busca avancada de produtos
+    [ObservableProperty]
+    private bool _buscaAvancadaVisivel;
+
+    [ObservableProperty]
+    private string _buscaAvancadaTermo = string.Empty;
+
+    [ObservableProperty]
+    private ObservableCollection<Produto> _resultadosBusca = new();
+
+    [ObservableProperty]
+    private Produto? _produtoBuscaSelecionado;
+
+    [ObservableProperty]
+    private bool _buscandoProdutos;
 
     // Totais exibidos na tela
     public decimal SubTotal => Itens.Sum(i => i.ValorTotal);
@@ -478,27 +501,16 @@ public partial class PDVViewModel : ObservableObject
             var idempotencyKey = Guid.NewGuid().ToString();
 
             // 3. Finaliza venda na API (servidor faz NFC-e, preco, estoque)
-            // Com retry automatico em caso de falha de rede
+            // Retry automatico via Polly no ErpApiClient
             MensagemStatus = "Finalizando venda...";
-            ResultadoVenda resultado;
-            try
-            {
-                resultado = await _apiClient.FinalizarVendaDireta(
-                    itensApi, parcelasApi,
-                    VendaAtual.ClienteCpfCnpj, troco, idempotencyKey);
-            }
-            catch (HttpRequestException)
-            {
-                MensagemStatus = "Falha na conexao. Tentando novamente...";
-                await Task.Delay(2000);
-                resultado = await _apiClient.FinalizarVendaDireta(
-                    itensApi, parcelasApi,
-                    VendaAtual.ClienteCpfCnpj, troco, idempotencyKey);
-            }
+            var resultado = await _apiClient.FinalizarVendaDireta(
+                itensApi, parcelasApi,
+                VendaAtual.ClienteCpfCnpj, troco, idempotencyKey);
 
             if (!resultado.Sucesso)
             {
                 MensagemStatus = $"Erro na venda: {resultado.Erro}";
+                _logger.Erro($"Venda falhou: {resultado.Erro}");
                 return;
             }
 
@@ -537,11 +549,17 @@ public partial class PDVViewModel : ObservableObject
             // 7. Navega para tela de comprovante
             MensagemStatus = $"Venda #{resultado.PedidoCodigo} finalizada! Total: {resultado.ValorVenda:C2}";
             MostrarToast($"Venda #{resultado.PedidoCodigo} finalizada!", "sucesso");
+
+            var operador = _sessao.Usuario?.Nome ?? "?";
+            _logger.Operacao(operador, "VENDA_FINALIZADA",
+                $"Pedido={resultado.PedidoCodigo} Total={resultado.ValorVenda:F2} Itens={itensApi.Count}");
+
             VendaFinalizada?.Invoke(VendaAtual);
         }
         catch (Exception ex)
         {
             MensagemStatus = $"Erro no pagamento: {ex.Message}";
+            _logger.Erro("Erro no pagamento", ex);
         }
         finally
         {
@@ -562,9 +580,11 @@ public partial class PDVViewModel : ObservableObject
         }
 
         ConfirmandoCancelamento = false;
+        var totalCancelado = ValorTotal;
         NovaVenda();
         MensagemStatus = "Venda cancelada";
         MostrarToast("Venda cancelada", "info");
+        _logger.Operacao(_sessao.Usuario?.Nome ?? "?", "VENDA_CANCELADA", $"Total={totalCancelado:F2}");
     }
 
     [RelayCommand]
@@ -705,6 +725,50 @@ public partial class PDVViewModel : ObservableObject
                 CodigoBarrasInput += tecla;
                 break;
         }
+    }
+
+    // Busca avancada de produtos
+    [RelayCommand]
+    private void AbrirBuscaAvancada()
+    {
+        BuscaAvancadaVisivel = true;
+        BuscaAvancadaTermo = string.Empty;
+        ResultadosBusca.Clear();
+    }
+
+    [RelayCommand]
+    private void FecharBuscaAvancada()
+    {
+        BuscaAvancadaVisivel = false;
+    }
+
+    [RelayCommand]
+    private async Task ExecutarBuscaAvancada()
+    {
+        if (string.IsNullOrWhiteSpace(BuscaAvancadaTermo)) return;
+
+        try
+        {
+            BuscandoProdutos = true;
+            var resultados = await _apiClient.PesquisarProdutos(BuscaAvancadaTermo, 30);
+            ResultadosBusca = new ObservableCollection<Produto>(resultados);
+        }
+        catch
+        {
+            ResultadosBusca.Clear();
+        }
+        finally
+        {
+            BuscandoProdutos = false;
+        }
+    }
+
+    [RelayCommand]
+    private void SelecionarProdutoBusca(Produto? produto)
+    {
+        if (produto == null) return;
+        AdicionarItemVenda(produto, QuantidadeInput);
+        BuscaAvancadaVisivel = false;
     }
 
     [RelayCommand]

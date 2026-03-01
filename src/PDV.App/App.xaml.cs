@@ -84,6 +84,9 @@ public partial class App : Application
         // Keep-alive
         services.AddSingleton<ApiKeepAliveService>();
 
+        // Logger de operacoes
+        services.AddSingleton<PdvLogger>();
+
         // Servicos de infraestrutura
         services.AddSingleton<IImpressoraService, ImpressoraService>();
         services.AddSingleton<INFCeService, NFCeServiceStub>();
@@ -140,6 +143,10 @@ public partial class App : Application
             // Para keep-alive
             var keepAlive = _serviceProvider.GetService<ApiKeepAliveService>();
             keepAlive?.Dispose();
+
+            // Flush logs
+            var logger = _serviceProvider.GetService<PdvLogger>();
+            logger?.Dispose();
 
             _serviceProvider.Dispose();
         }

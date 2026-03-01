@@ -5,6 +5,7 @@ using PDV.Core.Enums;
 using PDV.Core.Interfaces;
 using PDV.Core.Models;
 using PDV.Infrastructure.Api;
+using PDV.Infrastructure.Services;
 
 namespace PDV.App.ViewModels;
 
@@ -74,6 +75,9 @@ public partial class MainViewModel : ObservableObject
     {
         NomeOperador = nomeOperador;
         OperadorLogado = true;
+
+        var logger = _services.GetService<PdvLogger>();
+        logger?.Operacao(nomeOperador, "LOGIN");
 
         // Inicia keep-alive apos login
         var keepAlive = _services.GetService<ApiKeepAliveService>();
@@ -153,9 +157,12 @@ public partial class MainViewModel : ObservableObject
         vm.Confirmado = () =>
         {
             TelaAtual = _pdvVmAtual;
+            var acao = tipo == TipoMovimentoCaixa.Sangria ? "SANGRIA" : "SUPRIMENTO";
             _pdvVmAtual!.MensagemStatus = tipo == TipoMovimentoCaixa.Sangria
                 ? $"Sangria de {vm.Valor:C2} realizada"
                 : $"Suprimento de {vm.Valor:C2} realizado";
+            var logger = _services.GetService<PdvLogger>();
+            logger?.Operacao(NomeOperador, acao, $"Valor={vm.Valor:F2}");
         };
         vm.Cancelado = () => TelaAtual = _pdvVmAtual;
         TelaAtual = vm;
@@ -201,6 +208,9 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void Logout()
     {
+        var logger = _services.GetService<PdvLogger>();
+        logger?.Operacao(NomeOperador, "LOGOUT");
+
         var operadorService = _services.GetRequiredService<IOperadorService>();
         operadorService.Logout();
         NavegarParaLogin();

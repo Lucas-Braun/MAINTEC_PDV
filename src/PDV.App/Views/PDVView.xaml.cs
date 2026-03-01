@@ -44,4 +44,16 @@ public partial class PDVView : UserControl
                 vm.AtualizarAposEdicaoQuantidade();
         }), DispatcherPriority.ApplicationIdle);
     }
+
+    private void FecharBuscaAvancada_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (DataContext is PDVViewModel vm)
+            vm.FecharBuscaAvancadaCommand.Execute(null);
+    }
+
+    private void BuscaAvancada_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (DataContext is PDVViewModel vm && vm.ProdutoBuscaSelecionado != null)
+            vm.SelecionarProdutoBuscaCommand.Execute(vm.ProdutoBuscaSelecionado);
+    }
 }
