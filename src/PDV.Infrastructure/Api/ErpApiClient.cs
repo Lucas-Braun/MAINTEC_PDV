@@ -522,6 +522,104 @@ public class ErpApiClient : IApiClient
         }
     }
 
+    // ======================== CLIENTE ========================
+
+    public async Task<List<Cliente>> BuscarClientes(string termo)
+    {
+        try
+        {
+            using var request = CriarRequest(HttpMethod.Get,
+                $"{_prefix}/cliente/buscar?q={Uri.EscapeDataString(termo)}");
+            var response = await _httpClient.SendAsync(request);
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+                throw new Exception($"API retornou {(int)response.StatusCode}: {json}");
+
+            var dto = JsonSerializer.Deserialize<ClienteBuscaResponse>(json, _jsonOptions);
+
+            return dto?.Clientes?.Select(MapCliente).ToList() ?? new();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Erro ao buscar clientes: {ex.Message}");
+        }
+    }
+
+    public async Task<Cliente?> BuscarClientePorDocumento(string cpfCnpj)
+    {
+        try
+        {
+            using var request = CriarRequest(HttpMethod.Get,
+                $"{_prefix}/cliente/buscar?doc={Uri.EscapeDataString(cpfCnpj)}");
+            var response = await _httpClient.SendAsync(request);
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            var dto = JsonSerializer.Deserialize<ClienteBuscaDocResponse>(json, _jsonOptions);
+
+            if (dto?.Success != true || dto.Cliente == null) return null;
+
+            return MapCliente(dto.Cliente);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<ResultadoCadastroCliente> CadastrarCliente(string nome, string? cpfCnpj, string? telefone, string? email)
+    {
+        try
+        {
+            var body = new CadastrarClienteRequest
+            {
+                Nome = nome,
+                CpfCnpj = cpfCnpj,
+                Telefone = telefone,
+                Email = email
+            };
+
+            using var request = CriarRequest(HttpMethod.Post, $"{_prefix}/cliente/cadastrar", body);
+            var response = await _httpClient.SendAsync(request);
+
+            var json = await response.Content.ReadAsStringAsync();
+            var dto = JsonSerializer.Deserialize<CadastrarClienteResponse>(json, _jsonOptions);
+
+            if (dto == null)
+                return new ResultadoCadastroCliente { Sucesso = false, Erro = "Resposta invalida" };
+
+            var resultado = new ResultadoCadastroCliente
+            {
+                Sucesso = dto.Success,
+                Erro = dto.Error ?? dto.Message,
+                Duplicado = dto.Duplicado ?? false
+            };
+
+            if (dto.Cliente != null)
+                resultado.Cliente = MapCliente(dto.Cliente);
+
+            if (dto.ClienteExistente != null)
+                resultado.ClienteExistente = MapCliente(dto.ClienteExistente);
+
+            return resultado;
+        }
+        catch (Exception ex)
+        {
+            return new ResultadoCadastroCliente { Sucesso = false, Erro = ex.Message };
+        }
+    }
+
+    private static Cliente MapCliente(ClienteApiDTO dto) => new()
+    {
+        Id = dto.AgnInCodigo,
+        Nome = dto.AgnStNome,
+        CpfCnpj = dto.AgnStCnpjCpf,
+        Email = dto.AgnStEmail,
+        Telefone = dto.AgnStTelefone
+    };
+
     // ======================== HELPERS ========================
 
     private HttpRequestMessage CriarRequest(HttpMethod method, string url, object? body = null)

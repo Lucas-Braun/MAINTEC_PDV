@@ -13,6 +13,7 @@
 
     <UserControl.InputBindings>
         <KeyBinding Key="F2" Command="{Binding FinalizarVendaCommand}" />
+        <KeyBinding Key="F3" Command="{Binding ConsultarClienteCommand}" />
         <KeyBinding Key="F4" Command="{Binding ConsultarProdutoCommand}" />
         <KeyBinding Key="F5" Command="{Binding RealizarSangriaCommand}" />
         <KeyBinding Key="F6" Command="{Binding RealizarSuprimentoCommand}" />
@@ -61,6 +62,25 @@
                         <Run Text="Operador: " />
                         <Run Text="{Binding MensagemOperador}" FontWeight="Bold"
                              Foreground="{DynamicResource TextBrush}" />
+                    </TextBlock>
+                    <TextBlock VerticalAlignment="Center" Margin="0,0,20,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ClienteDefinido}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                        <Run Text="Cliente: " Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <Run Text="{Binding NomeCliente, Mode=OneWay}" FontWeight="Bold"
+                             Foreground="{DynamicResource PositiveBrush}"/>
+                        <Run Text=" (" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <Run Text="{Binding CpfCliente, Mode=OneWay}"
+                             Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <Run Text=")" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </TextBlock>
                     <TextBlock Text="{Binding DataHoraAtual}"
                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -344,6 +364,17 @@
                                 <StackPanel>
                                     <TextBlock Text="PAGAMENTO" FontSize="14" FontWeight="Bold" />
                                     <TextBlock Text="F2" FontSize="10" Opacity="0.7"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Style="{DynamicResource BotaoFuncao}"
+                                    Background="{DynamicResource PrimaryBrush}"
+                                    Command="{Binding ConsultarClienteCommand}"
+                                    ToolTip="Consultar ou cadastrar cliente (F3)">
+                                <StackPanel>
+                                    <TextBlock Text="CLIENTE" FontSize="14" FontWeight="Bold" />
+                                    <TextBlock Text="F3" FontSize="10" Opacity="0.7"
                                                HorizontalAlignment="Center" />
                                 </StackPanel>
                             </Button>

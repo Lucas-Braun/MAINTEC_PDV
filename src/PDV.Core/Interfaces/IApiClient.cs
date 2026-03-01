@@ -29,6 +29,11 @@ public interface IApiClient
     // Venda
     Task<ResultadoVenda> FinalizarVendaDireta(List<ItemVendaApi> itens, List<ParcelaApi> parcelas,
         string? cpfNota, decimal? troco, string idempotencyKey);
+
+    // Cliente
+    Task<List<Cliente>> BuscarClientes(string termo);
+    Task<Cliente?> BuscarClientePorDocumento(string cpfCnpj);
+    Task<ResultadoCadastroCliente> CadastrarCliente(string nome, string? cpfCnpj, string? telefone, string? email);
 }
 
 // ============ Result Types ============
@@ -120,4 +125,13 @@ public class ParcelaApi
     public int FcbInCodigo { get; set; }
     public decimal Valor { get; set; }
     public string? Vencimento { get; set; }
+}
+
+public class ResultadoCadastroCliente
+{
+    public bool Sucesso { get; set; }
+    public Cliente? Cliente { get; set; }
+    public string? Erro { get; set; }
+    public bool Duplicado { get; set; }
+    public Cliente? ClienteExistente { get; set; }
 }

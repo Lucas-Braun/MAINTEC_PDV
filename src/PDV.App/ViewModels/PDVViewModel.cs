@@ -44,6 +44,7 @@ public partial class PDVViewModel : ObservableObject
 
     public Action<decimal>? SolicitarPagamento { get; set; }
     public Action? SolicitarConsulta { get; set; }
+    public Action? SolicitarConsultaCliente { get; set; }
     public Action? SolicitarSangria { get; set; }
     public Action? SolicitarSuprimento { get; set; }
     public Action? SolicitarFechamento { get; set; }
@@ -92,6 +93,15 @@ public partial class PDVViewModel : ObservableObject
 
     [ObservableProperty]
     private string _ultimoItemQtd = string.Empty;
+
+    // Cliente associado a venda
+    [ObservableProperty]
+    private string _nomeCliente = string.Empty;
+
+    [ObservableProperty]
+    private string _cpfCliente = string.Empty;
+
+    public bool ClienteDefinido => !string.IsNullOrEmpty(NomeCliente);
 
     // Totais exibidos na tela
     public decimal SubTotal => Itens.Sum(i => i.ValorTotal);
@@ -342,6 +352,33 @@ public partial class PDVViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ConsultarCliente()
+    {
+        SolicitarConsultaCliente?.Invoke();
+    }
+
+    public void DefinirCliente(Cliente? cliente)
+    {
+        if (cliente != null)
+        {
+            VendaAtual.ClienteId = cliente.Id;
+            VendaAtual.ClienteCpfCnpj = cliente.CpfCnpj;
+            NomeCliente = cliente.Nome;
+            CpfCliente = cliente.CpfCnpj ?? string.Empty;
+            MensagemStatus = $"Cliente: {cliente.Nome}";
+        }
+        else
+        {
+            VendaAtual.ClienteId = null;
+            VendaAtual.ClienteCpfCnpj = null;
+            NomeCliente = string.Empty;
+            CpfCliente = string.Empty;
+            MensagemStatus = "Cliente removido da venda";
+        }
+        OnPropertyChanged(nameof(ClienteDefinido));
+    }
+
+    [RelayCommand]
     private void RealizarSangria()
     {
         SolicitarSangria?.Invoke();
@@ -382,6 +419,9 @@ public partial class PDVViewModel : ObservableObject
         VendaEmAndamento = false;
         CodigoBarrasInput = string.Empty;
         QuantidadeInput = 1;
+        NomeCliente = string.Empty;
+        CpfCliente = string.Empty;
+        OnPropertyChanged(nameof(ClienteDefinido));
         AtualizarTotais();
     }
 
