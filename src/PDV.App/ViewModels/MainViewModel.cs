@@ -215,4 +215,104 @@ public partial class MainViewModel : ObservableObject
         operadorService.Logout();
         NavegarParaLogin();
     }
+
+    // =========================================
+    // COMANDOS GLOBAIS (barra de botoes)
+    // =========================================
+
+    [RelayCommand]
+    private void IrParaPagamento()
+    {
+        if (_pdvVmAtual == null) return;
+        NavegarParaPDV();
+        _pdvVmAtual.FinalizarVendaCommand.Execute(null);
+    }
+
+    [RelayCommand]
+    private void IrParaCliente()
+    {
+        if (_pdvVmAtual == null) return;
+        NavegarParaConsultaCliente();
+    }
+
+    [RelayCommand]
+    private void IrParaConsulta()
+    {
+        if (_pdvVmAtual == null) return;
+        NavegarParaConsultaProduto();
+    }
+
+    [RelayCommand]
+    private void IrParaSangria()
+    {
+        if (_pdvVmAtual == null) return;
+        NavegarParaSangriaSuprimento(TipoMovimentoCaixa.Sangria);
+    }
+
+    [RelayCommand]
+    private void IrParaSuprimento()
+    {
+        if (_pdvVmAtual == null) return;
+        NavegarParaSangriaSuprimento(TipoMovimentoCaixa.Suprimento);
+    }
+
+    [RelayCommand]
+    private void IrParaVendas()
+    {
+        if (_pdvVmAtual == null) return;
+        NavegarParaConsultaVendas();
+    }
+
+    [RelayCommand]
+    private void IrParaDesconto()
+    {
+        if (_pdvVmAtual == null) return;
+        NavegarParaPDV();
+        _pdvVmAtual.AbrirDescontoCommand.Execute(null);
+    }
+
+    [RelayCommand]
+    private void IrParaCancelar()
+    {
+        if (_pdvVmAtual == null) return;
+        NavegarParaPDV();
+        _pdvVmAtual.CancelarVendaCommand.Execute(null);
+    }
+
+    [RelayCommand]
+    private void IrParaConfig()
+    {
+        if (_pdvVmAtual == null) return;
+        NavegarParaConfiguracoes();
+    }
+
+    [RelayCommand]
+    private void IrParaFechamento()
+    {
+        if (_pdvVmAtual == null) return;
+        NavegarParaFechamentoCaixa();
+    }
+
+    [RelayCommand]
+    private void IrParaLeituraX()
+    {
+        if (_pdvVmAtual == null) return;
+        NavegarParaPDV();
+        _ = _pdvVmAtual.AbrirLeituraXCommand.ExecuteAsync(null);
+    }
+
+    [RelayCommand]
+    private void IrParaTeclado()
+    {
+        if (_pdvVmAtual == null) return;
+        NavegarParaPDV();
+        _pdvVmAtual.ToggleTecladoCommand.Execute(null);
+    }
+
+    [RelayCommand]
+    private void VoltarParaPDV()
+    {
+        if (_pdvVmAtual != null)
+            NavegarParaPDV();
+    }
 }
