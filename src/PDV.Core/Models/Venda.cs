@@ -30,4 +30,5 @@ public class Venda
     // Sincronização com ERP
     public bool SincronizadoERP { get; set; } = false;
     public DateTime? DataSincronizacao { get; set; }
+    public string? ChaveIdempotencia { get; set; }
 }

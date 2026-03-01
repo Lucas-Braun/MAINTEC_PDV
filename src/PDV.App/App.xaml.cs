@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PDV.Core.Interfaces;
@@ -97,6 +98,7 @@ public partial class App : Application
         services.AddTransient<ICaixaService, CaixaService>();
         services.AddTransient<IProdutoService, ProdutoService>();
         services.AddTransient<IVendaService, VendaService>();
+        services.AddSingleton<ISyncQueueService, SyncQueueService>();
 
         // ViewModels
         services.AddSingleton<MainViewModel>();
@@ -125,10 +127,17 @@ public partial class App : Application
             db.Database.EnsureCreated();
         }
 
+        // Migra schema: adiciona colunas novas que EnsureCreated nao altera em banco existente
+        MigrarSchema(dbPath);
+
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show();
 
         splash.Close(TimeSpan.FromMilliseconds(300));
+
+        // Inicia servico de sincronizacao
+        var syncService = _serviceProvider.GetService<ISyncQueueService>();
+        syncService?.Iniciar();
 
         // Aplicar tema salvo
         ThemeManager.ApplyTheme(configApp.Tema);
@@ -140,6 +149,10 @@ public partial class App : Application
     {
         if (_serviceProvider != null)
         {
+            // Para sync
+            var syncService = _serviceProvider.GetService<ISyncQueueService>();
+            syncService?.Dispose();
+
             // Para keep-alive
             var keepAlive = _serviceProvider.GetService<ApiKeepAliveService>();
             keepAlive?.Dispose();
@@ -151,5 +164,41 @@ public partial class App : Application
             _serviceProvider.Dispose();
         }
         base.OnExit(e);
+    }
+
+    private static void MigrarSchema(string dbPath)
+    {
+        try
+        {
+            using var conn = new SqliteConnection($"Data Source={dbPath}");
+            conn.Open();
+
+            // Verifica se coluna ChaveIdempotencia ja existe
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "PRAGMA table_info(vendas)";
+            var temColuna = false;
+            using (var reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    if (reader.GetString(1) == "ChaveIdempotencia")
+                    {
+                        temColuna = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!temColuna)
+            {
+                using var alter = conn.CreateCommand();
+                alter.CommandText = "ALTER TABLE vendas ADD COLUMN ChaveIdempotencia TEXT";
+                alter.ExecuteNonQuery();
+            }
+        }
+        catch
+        {
+            // Banco novo ou erro nao-critico — EnsureCreated ja criou a coluna
+        }
     }
 }

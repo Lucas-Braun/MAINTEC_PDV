@@ -18,7 +18,11 @@ public partial class PDVViewModel : ObservableObject
     private readonly IImpressoraService _impressoraService;
     private readonly ITEFService _tefService;
     private readonly ICaixaService _caixaService;
+    private readonly IVendaService _vendaService;
+    private readonly ISyncQueueService _syncService;
     private readonly PdvLogger _logger;
+
+    private bool _apiConectadaAnterior;
 
     public PDVViewModel(
         IProdutoService produtoService,
@@ -27,6 +31,8 @@ public partial class PDVViewModel : ObservableObject
         IImpressoraService impressoraService,
         ITEFService tefService,
         ICaixaService caixaService,
+        IVendaService vendaService,
+        ISyncQueueService syncService,
         PdvLogger logger)
     {
         _produtoService = produtoService;
@@ -35,7 +41,20 @@ public partial class PDVViewModel : ObservableObject
         _impressoraService = impressoraService;
         _tefService = tefService;
         _caixaService = caixaService;
+        _vendaService = vendaService;
+        _syncService = syncService;
         _logger = logger;
+
+        // Subscreve a mudancas no contador de vendas pendentes
+        _syncService.PendentesAlterados += count =>
+        {
+            System.Windows.Application.Current?.Dispatcher?.BeginInvoke(() =>
+            {
+                VendasPendentesSync = count;
+                StatusSyncTexto = count > 0 ? $"{count} venda(s) pendente(s)" : string.Empty;
+                OnPropertyChanged(nameof(TemVendasPendentes));
+            });
+        };
 
         VendaAtual = new Venda();
         Itens = new ObservableCollection<ItemVenda>();
@@ -270,6 +289,34 @@ public partial class PDVViewModel : ObservableObject
     [ObservableProperty]
     private bool _buscandoProdutos;
 
+    // Sync offline
+    [ObservableProperty]
+    private int _vendasPendentesSync;
+
+    [ObservableProperty]
+    private string _statusSyncTexto = string.Empty;
+
+    public bool TemVendasPendentes => VendasPendentesSync > 0;
+
+    // Cadastro rapido de cliente (Ctrl+N)
+    [ObservableProperty]
+    private bool _cadastroClienteVisivel;
+
+    [ObservableProperty]
+    private string _clienteNovoNome = string.Empty;
+
+    [ObservableProperty]
+    private string _clienteNovoCpfCnpj = string.Empty;
+
+    [ObservableProperty]
+    private string _clienteNovoTelefone = string.Empty;
+
+    [ObservableProperty]
+    private string _cadastroClienteMensagem = string.Empty;
+
+    [ObservableProperty]
+    private bool _cadastrandoCliente;
+
     // Totais exibidos na tela
     public decimal SubTotal => Itens.Sum(i => i.ValorTotal);
     public decimal DescontoTotal => VendaAtual.DescontoTotal;
@@ -503,27 +550,57 @@ public partial class PDVViewModel : ObservableObject
             // 3. Finaliza venda na API (servidor faz NFC-e, preco, estoque)
             // Retry automatico via Polly no ErpApiClient
             MensagemStatus = "Finalizando venda...";
-            var resultado = await _apiClient.FinalizarVendaDireta(
-                itensApi, parcelasApi,
-                VendaAtual.ClienteCpfCnpj, troco, idempotencyKey);
 
-            if (!resultado.Sucesso)
+            ResultadoVenda? resultado = null;
+            bool contingencia = false;
+
+            try
             {
-                MensagemStatus = $"Erro na venda: {resultado.Erro}";
-                _logger.Erro($"Venda falhou: {resultado.Erro}");
-                return;
+                resultado = await _apiClient.FinalizarVendaDireta(
+                    itensApi, parcelasApi,
+                    VendaAtual.ClienteCpfCnpj, troco, idempotencyKey);
+
+                if (!resultado.Sucesso)
+                {
+                    MensagemStatus = $"Erro na venda: {resultado.Erro}";
+                    _logger.Erro($"Venda falhou: {resultado.Erro}");
+                    return;
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // API offline — salva em contingencia local
+                _logger.Erro($"API offline, salvando em contingencia: {ex.Message}");
+                contingencia = true;
             }
 
-            // 4. Popula venda local com resultado da API
+            // 4. Popula venda local
             VendaAtual.Pagamentos = pagamentos;
-            VendaAtual.Status = StatusVenda.Finalizada;
             VendaAtual.DataVenda = DateTime.Now;
-            VendaAtual.NumeroVenda = resultado.PedidoCodigo?.ToString() ?? "";
-            VendaAtual.ChaveNFCe = resultado.NfceChave;
 
-            if (resultado.NfceStatus == "NFE_AUT")
+            if (contingencia)
+            {
+                // Modo contingencia — salva localmente
+                VendaAtual.Status = StatusVenda.Contingencia;
+                VendaAtual.SincronizadoERP = false;
+                VendaAtual.ChaveIdempotencia = idempotencyKey;
+
+                await _vendaService.SalvarVenda(VendaAtual);
+
+                _logger.Operacao(_sessao.Usuario?.Nome ?? "?", "VENDA_CONTINGENCIA",
+                    $"VendaLocal={VendaAtual.NumeroVenda} Total={ValorTotal:F2} Itens={itensApi.Count}");
+            }
+            else
             {
                 VendaAtual.Status = StatusVenda.Finalizada;
+                VendaAtual.NumeroVenda = resultado!.PedidoCodigo?.ToString() ?? "";
+                VendaAtual.ChaveNFCe = resultado.NfceChave;
+                VendaAtual.SincronizadoERP = true;
+                VendaAtual.DataSincronizacao = DateTime.Now;
+
+                var operador = _sessao.Usuario?.Nome ?? "?";
+                _logger.Operacao(operador, "VENDA_FINALIZADA",
+                    $"Pedido={resultado.PedidoCodigo} Total={resultado.ValorVenda:F2} Itens={itensApi.Count}");
             }
 
             // 5. Imprime cupom (nao deve impedir a venda)
@@ -547,12 +624,16 @@ public partial class PDVViewModel : ObservableObject
             }
 
             // 7. Navega para tela de comprovante
-            MensagemStatus = $"Venda #{resultado.PedidoCodigo} finalizada! Total: {resultado.ValorVenda:C2}";
-            MostrarToast($"Venda #{resultado.PedidoCodigo} finalizada!", "sucesso");
-
-            var operador = _sessao.Usuario?.Nome ?? "?";
-            _logger.Operacao(operador, "VENDA_FINALIZADA",
-                $"Pedido={resultado.PedidoCodigo} Total={resultado.ValorVenda:F2} Itens={itensApi.Count}");
+            if (contingencia)
+            {
+                MensagemStatus = $"Venda salva em contingencia - Total: {ValorTotal:C2}";
+                MostrarToast("Venda salva em contingencia", "info");
+            }
+            else
+            {
+                MensagemStatus = $"Venda #{resultado!.PedidoCodigo} finalizada! Total: {resultado.ValorVenda:C2}";
+                MostrarToast($"Venda #{resultado.PedidoCodigo} finalizada!", "sucesso");
+            }
 
             VendaFinalizada?.Invoke(VendaAtual);
         }
@@ -958,6 +1039,87 @@ public partial class PDVViewModel : ObservableObject
     }
 
     // =========================================
+    // CADASTRO RAPIDO DE CLIENTE (Ctrl+N)
+    // =========================================
+
+    [RelayCommand]
+    private void AbrirCadastroCliente()
+    {
+        ClienteNovoNome = string.Empty;
+        ClienteNovoCpfCnpj = string.Empty;
+        ClienteNovoTelefone = string.Empty;
+        CadastroClienteMensagem = string.Empty;
+        CadastroClienteVisivel = true;
+    }
+
+    [RelayCommand]
+    private void FecharCadastroCliente()
+    {
+        CadastroClienteVisivel = false;
+    }
+
+    [RelayCommand]
+    private async Task CadastrarClienteRapido()
+    {
+        CadastroClienteMensagem = string.Empty;
+
+        // Valida nome obrigatorio
+        if (string.IsNullOrWhiteSpace(ClienteNovoNome))
+        {
+            CadastroClienteMensagem = "Nome e obrigatorio";
+            return;
+        }
+
+        // Valida CPF/CNPJ se informado
+        var cpfCnpj = Core.Helpers.CpfCnpjHelper.ApenasDigitos(ClienteNovoCpfCnpj);
+        if (!string.IsNullOrEmpty(cpfCnpj))
+        {
+            if (!Core.Helpers.CpfCnpjHelper.Validar(cpfCnpj))
+            {
+                CadastroClienteMensagem = "CPF/CNPJ invalido";
+                return;
+            }
+        }
+
+        try
+        {
+            CadastrandoCliente = true;
+            var resultado = await _apiClient.CadastrarCliente(
+                ClienteNovoNome.Trim(),
+                string.IsNullOrEmpty(cpfCnpj) ? null : cpfCnpj,
+                string.IsNullOrWhiteSpace(ClienteNovoTelefone) ? null : ClienteNovoTelefone.Trim(),
+                null);
+
+            if (resultado.Duplicado && resultado.ClienteExistente != null)
+            {
+                // Cliente ja existe — associa automaticamente
+                DefinirCliente(resultado.ClienteExistente);
+                CadastroClienteVisivel = false;
+                MostrarToast($"Cliente existente associado: {resultado.ClienteExistente.Nome}", "info");
+                return;
+            }
+
+            if (resultado.Sucesso && resultado.Cliente != null)
+            {
+                DefinirCliente(resultado.Cliente);
+                CadastroClienteVisivel = false;
+                MostrarToast($"Cliente cadastrado: {resultado.Cliente.Nome}", "sucesso");
+                return;
+            }
+
+            CadastroClienteMensagem = resultado.Erro ?? "Erro ao cadastrar cliente";
+        }
+        catch (Exception ex)
+        {
+            CadastroClienteMensagem = $"Erro: {ex.Message}";
+        }
+        finally
+        {
+            CadastrandoCliente = false;
+        }
+    }
+
+    // =========================================
     // METODOS AUXILIARES
     // =========================================
 
@@ -994,6 +1156,23 @@ public partial class PDVViewModel : ObservableObject
             ApiConectada = false;
             StatusApiTexto = "ERP: Offline";
         }
+
+        // Detecta reconexao → sincroniza vendas pendentes
+        if (ApiConectada && !_apiConectadaAnterior && _syncService.VendasPendentes > 0)
+        {
+            _ = Task.Run(async () =>
+            {
+                var sincronizadas = await _syncService.SincronizarAgora();
+                if (sincronizadas > 0)
+                {
+                    System.Windows.Application.Current?.Dispatcher?.BeginInvoke(() =>
+                    {
+                        MostrarToast($"{sincronizadas} venda(s) sincronizada(s)", "sucesso");
+                    });
+                }
+            });
+        }
+        _apiConectadaAnterior = ApiConectada;
 
         // NFC-e (depende da API estar online + config)
         NfceOnline = ApiConectada && (_sessao.Configuracao?.EmitirNfceAuto == true);

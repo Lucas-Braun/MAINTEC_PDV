@@ -56,4 +56,10 @@ public partial class PDVView : UserControl
         if (DataContext is PDVViewModel vm && vm.ProdutoBuscaSelecionado != null)
             vm.SelecionarProdutoBuscaCommand.Execute(vm.ProdutoBuscaSelecionado);
     }
+
+    private void FecharCadastroCliente_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (DataContext is PDVViewModel vm)
+            vm.FecharCadastroClienteCommand.Execute(null);
+    }
 }

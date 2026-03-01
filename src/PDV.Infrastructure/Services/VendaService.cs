@@ -56,6 +56,7 @@ public class VendaService : IVendaService
             existente.DataVenda = venda.DataVenda;
             existente.SincronizadoERP = venda.SincronizadoERP;
             existente.DataSincronizacao = venda.DataSincronizacao;
+            existente.ChaveIdempotencia = venda.ChaveIdempotencia;
 
             // Remove itens/pagamentos antigos e adiciona novos
             _db.ItensVenda.RemoveRange(existente.Itens);
@@ -106,7 +107,8 @@ public class VendaService : IVendaService
         return await _db.Vendas
             .Include(v => v.Itens)
             .Include(v => v.Pagamentos)
-            .Where(v => !v.SincronizadoERP && v.Status == StatusVenda.Finalizada)
+            .Where(v => !v.SincronizadoERP &&
+                (v.Status == StatusVenda.Finalizada || v.Status == StatusVenda.Contingencia))
             .OrderBy(v => v.DataVenda)
             .ToListAsync();
     }

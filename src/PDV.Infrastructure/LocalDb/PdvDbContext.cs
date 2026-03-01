@@ -45,6 +45,7 @@ public class PdvDbContext : DbContext
             e.Property(v => v.DescontoTotal).HasColumnType("decimal(18,2)");
             e.Property(v => v.AcrescimoTotal).HasColumnType("decimal(18,2)");
             e.Property(v => v.Status).HasConversion<int>();
+            e.Property(v => v.ChaveIdempotencia).HasMaxLength(50);
 
             // Propriedades computadas - ignorar no banco
             e.Ignore(v => v.SubTotal);

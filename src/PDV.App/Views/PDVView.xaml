@@ -28,6 +28,7 @@
         <KeyBinding Key="Add" Command="{Binding IncrementarQuantidadeCommand}" />
         <KeyBinding Key="Subtract" Command="{Binding DecrementarQuantidadeCommand}" />
         <KeyBinding Key="B" Modifiers="Ctrl" Command="{Binding AbrirBuscaAvancadaCommand}" />
+        <KeyBinding Key="N" Modifiers="Ctrl" Command="{Binding AbrirCadastroClienteCommand}" />
     </UserControl.InputBindings>
 
     <Grid>
@@ -743,6 +744,7 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0"
@@ -750,7 +752,27 @@
                            Foreground="{DynamicResource TextBrush}"
                            VerticalAlignment="Center" FontSize="13" />
 
+                <!-- Sync pendentes indicator -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal"
+                            VerticalAlignment="Center" Margin="20,0">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding TemVendasPendentes}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <TextBlock Text="&#xE895;" FontFamily="Segoe MDL2 Assets"
+                               FontSize="12" Foreground="#FFA500"
+                               VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <TextBlock Text="{Binding StatusSyncTexto}"
+                               Foreground="#FFA500" FontSize="12" FontWeight="SemiBold"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal"
                             VerticalAlignment="Center" Margin="20,0">
                     <Ellipse Width="8" Height="8" Margin="0,0,5,0">
                         <Ellipse.Style>
@@ -769,7 +791,7 @@
                                FontSize="12" />
                 </StackPanel>
 
-                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                <StackPanel Grid.Column="3" Orientation="Horizontal"
                             VerticalAlignment="Center" Margin="20,0">
                     <Ellipse Width="8" Height="8" Margin="0,0,5,0">
                         <Ellipse.Style>
@@ -788,7 +810,7 @@
                                FontSize="12" />
                 </StackPanel>
 
-                <StackPanel Grid.Column="3" Orientation="Horizontal"
+                <StackPanel Grid.Column="4" Orientation="Horizontal"
                             VerticalAlignment="Center">
                     <Ellipse Width="8" Height="8" Margin="0,0,5,0">
                         <Ellipse.Style>
@@ -1380,7 +1402,7 @@
 
                     <Separator Background="{DynamicResource SeparatorBrush}" Margin="0,16"/>
 
-                    <TextBlock Text="Ctrl+B = Busca avancada  |  3*codigo = 3 unidades"
+                    <TextBlock Text="Ctrl+B = Busca avancada  |  Ctrl+N = Novo cliente  |  3*codigo = 3 unidades"
                                FontSize="12" FontStyle="Italic"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                HorizontalAlignment="Center"
@@ -1502,6 +1524,129 @@
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ============================================= -->
+        <!-- OVERLAY CADASTRO RAPIDO DE CLIENTE (Ctrl+N)   -->
+        <!-- ============================================= -->
+        <Grid Grid.RowSpan="3" Panel.ZIndex="90">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding CadastroClienteVisivel}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+
+            <!-- Background escuro -->
+            <Border Background="#99000000"
+                    MouseDown="FecharCadastroCliente_Click"/>
+
+            <!-- Card central -->
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="16" Padding="40,30"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="520"
+                    Effect="{DynamicResource CardShadow}">
+                <StackPanel>
+                    <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets"
+                               FontSize="28" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource PrimaryBrush}"
+                               Margin="0,0,0,4"/>
+                    <TextBlock Text="CADASTRO RAPIDO DE CLIENTE"
+                               FontSize="22" FontWeight="Bold"
+                               Foreground="{DynamicResource PrimaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,4"/>
+                    <TextBlock Text="Ctrl+N - Cadastre um cliente sem sair do caixa"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,20"/>
+
+                    <!-- Nome (obrigatorio) -->
+                    <TextBlock Text="Nome *"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="13" Margin="0,0,0,6"/>
+                    <TextBox Text="{Binding ClienteNovoNome, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource TextBoxPDV}"
+                             FontSize="16" Padding="12,10"
+                             Margin="0,0,0,14"
+                             x:Name="TxtClienteNome">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Escape" Command="{Binding FecharCadastroClienteCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
+
+                    <!-- CPF/CNPJ -->
+                    <TextBlock Text="CPF/CNPJ"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="13" Margin="0,0,0,6"/>
+                    <TextBox Text="{Binding ClienteNovoCpfCnpj, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource TextBoxPDV}"
+                             FontSize="16" Padding="12,10"
+                             MaxLength="18"
+                             Margin="0,0,0,14">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Escape" Command="{Binding FecharCadastroClienteCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
+
+                    <!-- Telefone -->
+                    <TextBlock Text="Telefone"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="13" Margin="0,0,0,6"/>
+                    <TextBox Text="{Binding ClienteNovoTelefone, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource TextBoxPDV}"
+                             FontSize="16" Padding="12,10"
+                             MaxLength="15"
+                             Margin="0,0,0,14">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Return" Command="{Binding CadastrarClienteRapidoCommand}"/>
+                            <KeyBinding Key="Escape" Command="{Binding FecharCadastroClienteCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
+
+                    <!-- Mensagem de erro/sucesso -->
+                    <TextBlock Text="{Binding CadastroClienteMensagem}"
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="{DynamicResource NegativeBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,14"
+                               TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CadastroClienteMensagem}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- Botoes -->
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center">
+                        <Button Content="CADASTRAR"
+                                Command="{Binding CadastrarClienteRapidoCommand}"
+                                Style="{DynamicResource BotaoPositive}"
+                                FontSize="14" Height="44"
+                                Padding="24,0"
+                                Margin="0,0,12,0"/>
+                        <Button Content="CANCELAR (ESC)"
+                                Command="{Binding FecharCadastroClienteCommand}"
+                                Style="{DynamicResource BotaoNeutral}"
+                                FontSize="14" Height="44"
+                                Padding="24,0"/>
+                    </StackPanel>
+                </StackPanel>
             </Border>
         </Grid>
 
