@@ -428,9 +428,8 @@ public class ErpApiClient : IApiClient
                 $"{_prefix}/produto/buscar-codigo?codigo={Uri.EscapeDataString(codigo)}");
             var response = await _httpClient.SendAsync(request);
 
-            if (!response.IsSuccessStatusCode) return null;
-
             var json = await response.Content.ReadAsStringAsync();
+
             var dto = JsonSerializer.Deserialize<ProdutoBuscaResponse>(json, _jsonOptions);
 
             if (dto?.Success != true || dto.Produto == null) return null;

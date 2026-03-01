@@ -111,12 +111,13 @@ public partial class PDVViewModel : ObservableObject
         try
         {
             Processando = true;
+            var codigo = CodigoBarrasInput.Trim();
 
-            var produto = await _produtoService.BuscarPorCodigoBarras(CodigoBarrasInput);
+            var produto = await _produtoService.BuscarPorCodigoBarras(codigo);
 
             if (produto == null)
             {
-                MensagemStatus = $"Produto nao encontrado: {CodigoBarrasInput}";
+                MensagemStatus = $"Produto nao encontrado: {codigo}";
                 return;
             }
 
