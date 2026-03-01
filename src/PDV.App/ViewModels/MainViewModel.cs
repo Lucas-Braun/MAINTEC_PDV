@@ -67,6 +67,7 @@ public partial class MainViewModel : ObservableObject
         pdvVm.SolicitarConsultaVendas = NavegarParaConsultaVendas;
         pdvVm.SolicitarConfiguracoes = () => NavegarParaConfiguracoes();
         pdvVm.VendaFinalizada = NavegarParaComprovante;
+        pdvVm.SolicitarLogout = () => Logout();
     }
 
     private async void OnLoginSucesso(string nomeOperador)

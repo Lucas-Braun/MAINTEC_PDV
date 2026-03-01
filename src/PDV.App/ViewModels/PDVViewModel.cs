@@ -58,6 +58,7 @@ public partial class PDVViewModel : ObservableObject
     public Action? SolicitarConsultaVendas { get; set; }
     public Action? SolicitarConfiguracoes { get; set; }
     public Action<Venda>? VendaFinalizada { get; set; }
+    public Action? SolicitarLogout { get; set; }
 
     // =========================================
     // PROPRIEDADES OBSERVAVEIS
@@ -145,6 +146,44 @@ public partial class PDVViewModel : ObservableObject
     [ObservableProperty]
     private string _descontoPercentualInput = string.Empty;
 
+    // CPF na nota
+    [ObservableProperty]
+    private string _cpfNotaInput = string.Empty;
+
+    // Timeout visual
+    [ObservableProperty]
+    private string _tempoProcessamento = string.Empty;
+
+    private DispatcherTimer? _timerProcessamento;
+    private DateTime _inicioProcessamento;
+
+    partial void OnProcessandoChanged(bool value)
+    {
+        if (value)
+        {
+            _inicioProcessamento = DateTime.Now;
+            TempoProcessamento = "0s";
+            _timerProcessamento ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _timerProcessamento.Tick += TimerProcessamento_Tick;
+            _timerProcessamento.Start();
+        }
+        else
+        {
+            _timerProcessamento?.Stop();
+            if (_timerProcessamento != null)
+                _timerProcessamento.Tick -= TimerProcessamento_Tick;
+            TempoProcessamento = string.Empty;
+        }
+    }
+
+    private void TimerProcessamento_Tick(object? sender, EventArgs e)
+    {
+        var elapsed = DateTime.Now - _inicioProcessamento;
+        TempoProcessamento = elapsed.TotalSeconds < 60
+            ? $"{elapsed.Seconds}s"
+            : $"{(int)elapsed.TotalMinutes}m {elapsed.Seconds}s";
+    }
+
     // Totais exibidos na tela
     public decimal SubTotal => Itens.Sum(i => i.ValorTotal);
     public decimal DescontoTotal => VendaAtual.DescontoTotal;
@@ -164,6 +203,18 @@ public partial class PDVViewModel : ObservableObject
         {
             Processando = true;
             var codigo = CodigoBarrasInput.Trim();
+            var qtd = QuantidadeInput;
+
+            // Suporta atalho "3*codigo" para quantidade
+            if (codigo.Contains('*'))
+            {
+                var partes = codigo.Split('*', 2);
+                if (decimal.TryParse(partes[0], out var qtdParsed) && qtdParsed > 0)
+                {
+                    qtd = qtdParsed;
+                    codigo = partes[1].Trim();
+                }
+            }
 
             var produto = await _produtoService.BuscarPorCodigoBarras(codigo);
 
@@ -179,7 +230,7 @@ public partial class PDVViewModel : ObservableObject
                 return;
             }
 
-            AdicionarItemVenda(produto, QuantidadeInput);
+            AdicionarItemVenda(produto, qtd);
 
             CodigoBarrasInput = string.Empty;
             QuantidadeInput = 1;
@@ -270,6 +321,21 @@ public partial class PDVViewModel : ObservableObject
         {
             MensagemStatus = "Nenhum item na venda";
             return;
+        }
+
+        // Se tem CPF na nota informado, associa a venda
+        if (!string.IsNullOrWhiteSpace(CpfNotaInput) && string.IsNullOrEmpty(VendaAtual.ClienteCpfCnpj))
+        {
+            var digitos = Core.Helpers.CpfCnpjHelper.ApenasDigitos(CpfNotaInput);
+            if (digitos.Length > 0 && Core.Helpers.CpfCnpjHelper.Validar(digitos))
+            {
+                VendaAtual.ClienteCpfCnpj = digitos;
+            }
+            else if (digitos.Length > 0)
+            {
+                MensagemStatus = "CPF/CNPJ na nota invalido";
+                return;
+            }
         }
 
         SolicitarPagamento?.Invoke(ValorTotal);
@@ -549,6 +615,18 @@ public partial class PDVViewModel : ObservableObject
         SolicitarFechamento?.Invoke();
     }
 
+    [RelayCommand]
+    private void TrocarOperador()
+    {
+        if (VendaEmAndamento)
+        {
+            MensagemStatus = "Finalize ou cancele a venda antes de trocar operador";
+            return;
+        }
+
+        SolicitarLogout?.Invoke();
+    }
+
     // =========================================
     // METODOS AUXILIARES
     // =========================================
@@ -563,6 +641,7 @@ public partial class PDVViewModel : ObservableObject
         QuantidadeInput = 1;
         NomeCliente = string.Empty;
         CpfCliente = string.Empty;
+        CpfNotaInput = string.Empty;
         OnPropertyChanged(nameof(ClienteDefinido));
         AtualizarTotais();
     }

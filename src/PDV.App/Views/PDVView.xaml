@@ -21,6 +21,7 @@
         <KeyBinding Key="F8" Command="{Binding AbrirDescontoCommand}" />
         <KeyBinding Key="F9" Command="{Binding CancelarVendaCommand}" />
         <KeyBinding Key="F10" Command="{Binding AbrirConfiguracoesCommand}" />
+        <KeyBinding Key="F11" Command="{Binding TrocarOperadorCommand}" />
         <KeyBinding Key="F12" Command="{Binding FecharCaixaCommand}" />
         <KeyBinding Key="Delete" Command="{Binding RemoverItemCommand}" />
     </UserControl.InputBindings>
@@ -120,6 +121,8 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="80" />
                                 <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="140" />
                             </Grid.ColumnDefinitions>
 
                             <TextBlock Grid.Column="0" Text="Codigo:"
@@ -159,6 +162,24 @@
                                      CaretBrush="{DynamicResource TextBrush}"
                                      TextAlignment="Center"
                                      VerticalContentAlignment="Center" />
+
+                            <TextBlock Grid.Column="4" Text="CPF nota:"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center" FontSize="12"
+                                       Margin="15,0,5,0" />
+
+                            <TextBox Grid.Column="5"
+                                     Text="{Binding CpfNotaInput, UpdateSourceTrigger=PropertyChanged}"
+                                     FontSize="13"
+                                     Background="Transparent"
+                                     Foreground="{DynamicResource TextBrush}"
+                                     BorderBrush="{DynamicResource SeparatorBrush}"
+                                     BorderThickness="0,0,0,1"
+                                     Padding="6,5"
+                                     CaretBrush="{DynamicResource TextBrush}"
+                                     VerticalContentAlignment="Center"
+                                     MaxLength="18"
+                                     ToolTip="CPF/CNPJ para nota fiscal"/>
                         </Grid>
                     </Border>
 
@@ -460,6 +481,17 @@
 
                             <Button Style="{DynamicResource BotaoFuncao}"
                                     Background="{DynamicResource NeutralBrush}"
+                                    Command="{Binding TrocarOperadorCommand}"
+                                    ToolTip="Trocar operador / Logout (F11)">
+                                <StackPanel>
+                                    <TextBlock Text="LOGOUT" FontSize="14" FontWeight="Bold" />
+                                    <TextBlock Text="F11" FontSize="10" Opacity="0.7"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Style="{DynamicResource BotaoFuncao}"
+                                    Background="{DynamicResource NeutralBrush}"
                                     Command="{Binding FecharCaixaCommand}"
                                     ToolTip="Fechar o caixa e gerar relatorio (F12)">
                                 <StackPanel>
@@ -690,11 +722,17 @@
                              Foreground="{DynamicResource PrimaryBrush}"
                              Background="{DynamicResource SurfaceLightBrush}"
                              BorderThickness="0"/>
-                <TextBlock Text="Processando..."
+                <TextBlock Text="{Binding MensagemStatus}"
                            FontSize="18" FontWeight="SemiBold"
                            Foreground="White"
                            HorizontalAlignment="Center"
                            Margin="0,16,0,0"/>
+                <TextBlock Text="{Binding TempoProcessamento}"
+                           FontSize="14"
+                           Foreground="#AAFFFFFF"
+                           HorizontalAlignment="Center"
+                           FontFamily="Consolas"
+                           Margin="0,6,0,0"/>
             </StackPanel>
         </Grid>
 

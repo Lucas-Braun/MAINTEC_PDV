@@ -9,10 +9,13 @@ namespace PDV.App.ViewModels;
 public partial class ConsultaVendasViewModel : ObservableObject
 {
     private readonly IApiClient _apiClient;
+    private readonly IImpressoraService _impressoraService;
+    private int _limiteAtual = 50;
 
-    public ConsultaVendasViewModel(IApiClient apiClient)
+    public ConsultaVendasViewModel(IApiClient apiClient, IImpressoraService impressoraService)
     {
         _apiClient = apiClient;
+        _impressoraService = impressoraService;
         Vendas = new ObservableCollection<VendaResumo>();
         ItensDetalhe = new ObservableCollection<ItemVendaDetalhe>();
 
@@ -109,10 +112,11 @@ public partial class ConsultaVendasViewModel : ObservableObject
             MensagemSucesso = string.Empty;
             DetalheAtual = null;
             ItensDetalhe.Clear();
+            _limiteAtual = 50;
 
             var status = string.IsNullOrEmpty(StatusFiltro) ? null : StatusFiltro;
             var nf = string.IsNullOrWhiteSpace(FiltroNf) ? null : FiltroNf.Trim();
-            var vendas = await _apiClient.ListarVendas(DataInicio, DataFim, status, nf);
+            var vendas = await _apiClient.ListarVendas(DataInicio, DataFim, status, nf, _limiteAtual);
 
             Vendas.Clear();
             foreach (var v in vendas)
@@ -157,6 +161,80 @@ public partial class ConsultaVendasViewModel : ObservableObject
         catch (Exception ex)
         {
             MensagemErro = $"Erro ao carregar detalhe: {ex.Message}";
+        }
+        finally
+        {
+            Processando = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task Reimprimir()
+    {
+        if (DetalheAtual == null || VendaSelecionada == null)
+        {
+            MensagemErro = "Selecione uma venda para reimprimir";
+            return;
+        }
+
+        try
+        {
+            Processando = true;
+            MensagemErro = string.Empty;
+
+            // Monta Venda minima para impressao
+            var venda = new Venda
+            {
+                NumeroVenda = VendaSelecionada.NfNumero.ToString(),
+                DataVenda = DateTime.TryParse(VendaSelecionada.Data, out var dt) ? dt : DateTime.Now,
+                ChaveNFCe = DetalheAtual.NfceChave,
+                ClienteCpfCnpj = DetalheAtual.CpfNota,
+                Itens = DetalheAtual.Itens.Select(i => new ItemVenda
+                {
+                    NumeroItem = i.Sequencia,
+                    CodigoBarras = i.Codigo,
+                    DescricaoProduto = i.Descricao,
+                    UnidadeMedida = i.Unidade,
+                    Quantidade = i.Quantidade,
+                    PrecoUnitario = i.PrecoUnitario
+                }).ToList()
+            };
+
+            await _impressoraService.ImprimirCupom(venda);
+            MensagemSucesso = "Cupom enviado para impressao";
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao reimprimir: {ex.Message}";
+        }
+        finally
+        {
+            Processando = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task CarregarMais()
+    {
+        _limiteAtual += 50;
+        try
+        {
+            Processando = true;
+            MensagemErro = string.Empty;
+
+            var status = string.IsNullOrEmpty(StatusFiltro) ? null : StatusFiltro;
+            var nf = string.IsNullOrWhiteSpace(FiltroNf) ? null : FiltroNf.Trim();
+            var vendas = await _apiClient.ListarVendas(DataInicio, DataFim, status, nf, _limiteAtual);
+
+            Vendas.Clear();
+            foreach (var v in vendas)
+                Vendas.Add(v);
+
+            TotalRegistros = Vendas.Count;
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro: {ex.Message}";
         }
         finally
         {
