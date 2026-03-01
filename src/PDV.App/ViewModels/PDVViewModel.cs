@@ -154,8 +154,10 @@ public partial class PDVViewModel : ObservableObject
         if (itemExistente != null)
         {
             itemExistente.Quantidade += quantidade;
+            // Forca atualizacao visual removendo e reinserindo
             var index = Itens.IndexOf(itemExistente);
-            Itens[index] = itemExistente;
+            Itens.RemoveAt(index);
+            Itens.Insert(index, itemExistente);
         }
         else
         {
