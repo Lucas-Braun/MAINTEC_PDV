@@ -7,215 +7,238 @@
         <KeyBinding Key="Escape" Command="{Binding VoltarAoPDVCommand}" />
     </UserControl.InputBindings>
 
-    <Grid>
-        <!-- Card central com ScrollViewer -->
-        <Border HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Width="620"
-                MaxHeight="700"
-                Background="{DynamicResource SurfaceBrush}"
-                CornerRadius="12"
-                Effect="{DynamicResource CardShadow}">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                          Padding="40,36">
-                <StackPanel>
-                    <!-- Titulo -->
-                    <TextBlock Text="CONFIGURACOES"
-                               Style="{DynamicResource TituloPDV}"
-                               FontSize="28"
-                               HorizontalAlignment="Center"
-                               Margin="0,0,0,28"/>
+        <!-- ============================================= -->
+        <!-- TITULO                                        -->
+        <!-- ============================================= -->
+        <TextBlock Grid.Row="0" Text="CONFIGURACOES"
+                   Style="{DynamicResource TituloPDV}"
+                   FontSize="24"
+                   Margin="0,0,0,16"/>
 
-                    <!-- ====== SECAO TEMA ====== -->
-                    <TextBlock Text="TEMA"
+        <!-- ============================================= -->
+        <!-- GRID PRINCIPAL - 2 COLUNAS                    -->
+        <!-- ============================================= -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="16"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- ====== COLUNA ESQUERDA: IMPRESSORA ====== -->
+            <Border Grid.Column="0" Grid.Row="0"
+                    Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12" Padding="24,20"
+                    Effect="{DynamicResource CardShadow}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="IMPRESSORA"
                                Style="{DynamicResource LabelPDV}"
-                               Margin="0,0,0,10"/>
+                               FontSize="15" Margin="0,0,0,16"/>
 
-                    <Border Background="{DynamicResource SurfaceLightBrush}"
-                            CornerRadius="8"
-                            Padding="16,12"
-                            Margin="0,0,0,24">
-                        <StackPanel Orientation="Horizontal"
-                                    HorizontalAlignment="Center">
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Tipo Conexao -->
+                        <TextBlock Grid.Row="0" Grid.Column="0"
+                                   Text="Tipo:"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13" VerticalAlignment="Center"
+                                   Margin="0,0,12,12"/>
+                        <ComboBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2"
+                                  Style="{DynamicResource ComboBoxPDV}"
+                                  ItemsSource="{Binding TiposConexao}"
+                                  SelectedItem="{Binding TipoConexao}"
+                                  Margin="0,0,0,12"/>
+
+                        <!-- Porta COM (visivel quando USB/Serial) -->
+                        <TextBlock Grid.Row="1" Grid.Column="0"
+                                   Text="Porta:"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13" VerticalAlignment="Center"
+                                   Margin="0,0,12,12"
+                                   Visibility="{Binding IsConexaoSerial, Converter={StaticResource BoolToVisibility}}"/>
+                        <ComboBox Grid.Row="1" Grid.Column="1"
+                                  Style="{DynamicResource ComboBoxPDV}"
+                                  ItemsSource="{Binding PortasDisponiveis}"
+                                  SelectedItem="{Binding PortaSelecionada}"
+                                  Margin="0,0,8,12"
+                                  Visibility="{Binding IsConexaoSerial, Converter={StaticResource BoolToVisibility}}"/>
+                        <Button Grid.Row="1" Grid.Column="2"
+                                Content="ATUALIZAR"
+                                Command="{Binding AtualizarPortasCommand}"
+                                Style="{DynamicResource BotaoGhost}"
+                                FontSize="12" Padding="12,6"
+                                Margin="0,0,0,12"
+                                Visibility="{Binding IsConexaoSerial, Converter={StaticResource BoolToVisibility}}"/>
+
+                        <!-- Impressora Windows (visivel quando Spooler) -->
+                        <TextBlock Grid.Row="1" Grid.Column="0"
+                                   Text="Impressora:"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13" VerticalAlignment="Center"
+                                   Margin="0,0,12,12"
+                                   Visibility="{Binding IsConexaoSpooler, Converter={StaticResource BoolToVisibility}}"/>
+                        <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                  Style="{DynamicResource ComboBoxPDV}"
+                                  ItemsSource="{Binding ImpressorasWindows}"
+                                  SelectedItem="{Binding ImpressoraSelecionada}"
+                                  Margin="0,0,0,12"
+                                  Visibility="{Binding IsConexaoSpooler, Converter={StaticResource BoolToVisibility}}"/>
+
+                        <!-- IP (visivel quando Rede) -->
+                        <TextBlock Grid.Row="1" Grid.Column="0"
+                                   Text="IP:"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13" VerticalAlignment="Center"
+                                   Margin="0,0,12,12"
+                                   Visibility="{Binding IsConexaoRede, Converter={StaticResource BoolToVisibility}}"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                 Style="{DynamicResource TextBoxPDV}"
+                                 Text="{Binding IpImpressora, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0,0,0,12"
+                                 Visibility="{Binding IsConexaoRede, Converter={StaticResource BoolToVisibility}}"/>
+
+                        <!-- Porta Rede (visivel quando Rede) -->
+                        <TextBlock Grid.Row="2" Grid.Column="0"
+                                   Text="Porta:"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13" VerticalAlignment="Center"
+                                   Margin="0,0,12,12"
+                                   Visibility="{Binding IsConexaoRede, Converter={StaticResource BoolToVisibility}}"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                                 Style="{DynamicResource TextBoxPDV}"
+                                 Text="{Binding PortaRede, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0,0,0,12"
+                                 Visibility="{Binding IsConexaoRede, Converter={StaticResource BoolToVisibility}}"/>
+
+                        <!-- Colunas -->
+                        <TextBlock Grid.Row="3" Grid.Column="0"
+                                   Text="Colunas:"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13" VerticalAlignment="Center"
+                                   Margin="0,0,12,12"/>
+                        <ComboBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"
+                                  Style="{DynamicResource ComboBoxPDV}"
+                                  ItemsSource="{Binding OpcoesColuna}"
+                                  SelectedItem="{Binding ColunasMaximas}"
+                                  Margin="0,0,0,12"/>
+
+                        <!-- Testar conexao -->
+                        <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3"
+                                    Orientation="Horizontal"
+                                    Margin="0,4,0,0">
+                            <Button Content="TESTAR CONEXAO"
+                                    Command="{Binding TestarConexaoCommand}"
+                                    Style="{DynamicResource BotaoGhost}"
+                                    FontSize="13" Padding="16,8"/>
+                            <Button Content="IMPRIMIR TESTE"
+                                    Command="{Binding ImprimirTesteCommand}"
+                                    Style="{DynamicResource BotaoPDV}"
+                                    FontSize="13" Padding="16,8"
+                                    Margin="8,0,0,0"/>
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center"
+                                        Margin="16,0,0,0"
+                                        Visibility="{Binding TesteVisivel, Converter={StaticResource BoolToVisibility}}">
+                                <Ellipse Width="8" Height="8"
+                                         VerticalAlignment="Center"
+                                         Margin="0,0,6,0">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="{DynamicResource NegativeBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TesteConectado}" Value="True">
+                                                    <Setter Property="Fill" Value="{DynamicResource PositiveBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock Text="{Binding ResultadoTeste}"
+                                           Foreground="{DynamicResource TextBrush}"
+                                           FontSize="13"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- ====== COLUNA DIREITA: TEMA + API + SISTEMA ====== -->
+            <Grid Grid.Column="2" Grid.Row="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="16"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="16"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- TEMA -->
+                <Border Grid.Row="0"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12" Padding="24,20"
+                        Effect="{DynamicResource CardShadow}">
+                    <StackPanel>
+                        <TextBlock Text="TEMA"
+                                   Style="{DynamicResource LabelPDV}"
+                                   FontSize="15" Margin="0,0,0,12"/>
+                        <StackPanel Orientation="Horizontal">
                             <RadioButton Style="{DynamicResource RadioPDV}"
                                          Content="Morning Horizon (Light)"
                                          GroupName="Tema"
                                          IsChecked="{Binding IsMorningHorizon, Mode=TwoWay}"
-                                         Margin="0,0,12,0"/>
+                                         Margin="0,0,20,0"/>
                             <RadioButton Style="{DynamicResource RadioPDV}"
                                          Content="Evening Horizon (Dark)"
                                          GroupName="Tema"
                                          IsChecked="{Binding IsEveningHorizon, Mode=TwoWay}"/>
                         </StackPanel>
-                    </Border>
+                    </StackPanel>
+                </Border>
 
-                    <!-- ====== SECAO IMPRESSORA ====== -->
-                    <TextBlock Text="IMPRESSORA"
-                               Style="{DynamicResource LabelPDV}"
-                               Margin="0,0,0,10"/>
-
-                    <Border Background="{DynamicResource SurfaceLightBrush}"
-                            CornerRadius="8"
-                            Padding="16,14"
-                            Margin="0,0,0,24">
+                <!-- API -->
+                <Border Grid.Row="2"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12" Padding="24,20"
+                        Effect="{DynamicResource CardShadow}">
+                    <StackPanel>
+                        <TextBlock Text="API"
+                                   Style="{DynamicResource LabelPDV}"
+                                   FontSize="15" Margin="0,0,0,12"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="90"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <!-- Tipo Conexao -->
-                            <TextBlock Grid.Row="0" Grid.Column="0"
-                                       Text="Tipo:"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       FontSize="13" VerticalAlignment="Center"
-                                       Margin="0,0,12,10"/>
-                            <ComboBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2"
-                                      Style="{DynamicResource ComboBoxPDV}"
-                                      ItemsSource="{Binding TiposConexao}"
-                                      SelectedItem="{Binding TipoConexao}"
-                                      Margin="0,0,0,10"/>
-
-                            <!-- Porta COM (visivel quando USB/Serial) -->
-                            <TextBlock Grid.Row="1" Grid.Column="0"
-                                       Text="Porta:"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       FontSize="13" VerticalAlignment="Center"
-                                       Margin="0,0,12,10"
-                                       Visibility="{Binding IsConexaoSerial, Converter={StaticResource BoolToVisibility}}"/>
-                            <ComboBox Grid.Row="1" Grid.Column="1"
-                                      Style="{DynamicResource ComboBoxPDV}"
-                                      ItemsSource="{Binding PortasDisponiveis}"
-                                      SelectedItem="{Binding PortaSelecionada}"
-                                      Margin="0,0,8,10"
-                                      Visibility="{Binding IsConexaoSerial, Converter={StaticResource BoolToVisibility}}"/>
-                            <Button Grid.Row="1" Grid.Column="2"
-                                    Content="ATUALIZAR"
-                                    Command="{Binding AtualizarPortasCommand}"
-                                    Style="{DynamicResource BotaoGhost}"
-                                    FontSize="12"
-                                    Padding="12,6"
-                                    Margin="0,0,0,10"
-                                    Visibility="{Binding IsConexaoSerial, Converter={StaticResource BoolToVisibility}}"/>
-
-                            <!-- Impressora Windows (visivel quando Spooler) -->
-                            <TextBlock Grid.Row="1" Grid.Column="0"
-                                       Text="Impressora:"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       FontSize="13" VerticalAlignment="Center"
-                                       Margin="0,0,12,10"
-                                       Visibility="{Binding IsConexaoSpooler, Converter={StaticResource BoolToVisibility}}"/>
-                            <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
-                                      Style="{DynamicResource ComboBoxPDV}"
-                                      ItemsSource="{Binding ImpressorasWindows}"
-                                      SelectedItem="{Binding ImpressoraSelecionada}"
-                                      Margin="0,0,0,10"
-                                      Visibility="{Binding IsConexaoSpooler, Converter={StaticResource BoolToVisibility}}"/>
-
-                            <!-- IP (visivel quando Rede) -->
-                            <TextBlock Grid.Row="1" Grid.Column="0"
-                                       Text="IP:"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       FontSize="13" VerticalAlignment="Center"
-                                       Margin="0,0,12,10"
-                                       Visibility="{Binding IsConexaoRede, Converter={StaticResource BoolToVisibility}}"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
-                                     Style="{DynamicResource TextBoxPDV}"
-                                     Text="{Binding IpImpressora, UpdateSourceTrigger=PropertyChanged}"
-                                     Margin="0,0,0,10"
-                                     Visibility="{Binding IsConexaoRede, Converter={StaticResource BoolToVisibility}}"/>
-
-                            <!-- Porta Rede (visivel quando Rede) -->
-                            <TextBlock Grid.Row="2" Grid.Column="0"
-                                       Text="Porta:"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       FontSize="13" VerticalAlignment="Center"
-                                       Margin="0,0,12,10"
-                                       Visibility="{Binding IsConexaoRede, Converter={StaticResource BoolToVisibility}}"/>
-                            <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
-                                     Style="{DynamicResource TextBoxPDV}"
-                                     Text="{Binding PortaRede, UpdateSourceTrigger=PropertyChanged}"
-                                     Margin="0,0,0,10"
-                                     Visibility="{Binding IsConexaoRede, Converter={StaticResource BoolToVisibility}}"/>
-
-                            <!-- Colunas -->
-                            <TextBlock Grid.Row="3" Grid.Column="0"
-                                       Text="Colunas:"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       FontSize="13" VerticalAlignment="Center"
-                                       Margin="0,0,12,10"/>
-                            <ComboBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"
-                                      Style="{DynamicResource ComboBoxPDV}"
-                                      ItemsSource="{Binding OpcoesColuna}"
-                                      SelectedItem="{Binding ColunasMaximas}"
-                                      Margin="0,0,0,10"/>
-
-                            <!-- Testar conexao -->
-                            <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3"
-                                        Orientation="Horizontal"
-                                        Margin="0,4,0,0">
-                                <Button Content="TESTAR CONEXAO"
-                                        Command="{Binding TestarConexaoCommand}"
-                                        Style="{DynamicResource BotaoGhost}"
-                                        FontSize="13"
-                                        Padding="16,8"/>
-                                <Button Content="IMPRIMIR TESTE"
-                                        Command="{Binding ImprimirTesteCommand}"
-                                        Style="{DynamicResource BotaoPDV}"
-                                        FontSize="13"
-                                        Padding="16,8"
-                                        Margin="8,0,0,0"/>
-                                <StackPanel Orientation="Horizontal"
-                                            VerticalAlignment="Center"
-                                            Margin="16,0,0,0"
-                                            Visibility="{Binding TesteVisivel, Converter={StaticResource BoolToVisibility}}">
-                                    <Ellipse Width="8" Height="8"
-                                             VerticalAlignment="Center"
-                                             Margin="0,0,6,0">
-                                        <Ellipse.Style>
-                                            <Style TargetType="Ellipse">
-                                                <Setter Property="Fill" Value="{DynamicResource NegativeBrush}"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding TesteConectado}" Value="True">
-                                                        <Setter Property="Fill" Value="{DynamicResource PositiveBrush}"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Ellipse.Style>
-                                    </Ellipse>
-                                    <TextBlock Text="{Binding ResultadoTeste}"
-                                               Foreground="{DynamicResource TextBrush}"
-                                               FontSize="13"
-                                               VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <!-- ====== SECAO API ====== -->
-                    <TextBlock Text="API"
-                               Style="{DynamicResource LabelPDV}"
-                               Margin="0,0,0,10"/>
-
-                    <Border Background="{DynamicResource SurfaceLightBrush}"
-                            CornerRadius="8"
-                            Padding="16,12"
-                            Margin="0,0,0,24">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="50"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-
                             <TextBlock Grid.Column="0" Text="URL:"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        FontSize="13" VerticalAlignment="Center"
@@ -224,20 +247,21 @@
                                      Style="{DynamicResource TextBoxPDV}"
                                      Text="{Binding ApiUrl, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
-                    </Border>
+                    </StackPanel>
+                </Border>
 
-                    <!-- ====== SECAO SISTEMA ====== -->
-                    <TextBlock Text="SISTEMA"
-                               Style="{DynamicResource LabelPDV}"
-                               Margin="0,0,0,10"/>
-
-                    <Border Background="{DynamicResource SurfaceLightBrush}"
-                            CornerRadius="8"
-                            Padding="16,12"
-                            Margin="0,0,0,28">
+                <!-- SISTEMA -->
+                <Border Grid.Row="4"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12" Padding="24,20"
+                        Effect="{DynamicResource CardShadow}">
+                    <StackPanel>
+                        <TextBlock Text="SISTEMA"
+                                   Style="{DynamicResource LabelPDV}"
+                                   FontSize="15" Margin="0,0,0,12"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="80"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
@@ -247,7 +271,6 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <!-- Empresa -->
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Empresa:"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        FontSize="13" Margin="0,0,12,8"
@@ -258,7 +281,6 @@
                                        FontSize="13" FontWeight="SemiBold"
                                        VerticalAlignment="Center" Margin="0,0,0,8"/>
 
-                            <!-- CNPJ -->
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="CNPJ:"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        FontSize="13" Margin="0,0,12,8"
@@ -269,7 +291,6 @@
                                        FontSize="13" FontWeight="SemiBold"
                                        VerticalAlignment="Center" Margin="0,0,0,8"/>
 
-                            <!-- Endereco -->
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Endereco:"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        FontSize="13" Margin="0,0,12,8"
@@ -281,7 +302,6 @@
                                        TextWrapping="Wrap"
                                        VerticalAlignment="Center" Margin="0,0,0,8"/>
 
-                            <!-- Versao -->
                             <TextBlock Grid.Row="3" Grid.Column="0" Text="Versao:"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        FontSize="13" Margin="0,0,12,0"
@@ -292,32 +312,58 @@
                                        FontSize="13" FontWeight="SemiBold"
                                        VerticalAlignment="Center"/>
                         </Grid>
-                    </Border>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
 
-                    <!-- Botoes SALVAR + VOLTAR -->
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+        <!-- ============================================= -->
+        <!-- RODAPE - SALVAR + VOLTAR                      -->
+        <!-- ============================================= -->
+        <Grid Grid.Row="2" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-                        <Button Grid.Column="0"
-                                Content="SALVAR"
-                                Command="{Binding SalvarCommand}"
-                                Style="{DynamicResource BotaoPositive}"
-                                FontSize="16"
-                                Height="48"/>
-                        <Button Grid.Column="2"
-                                Content="VOLTAR (ESC)"
-                                Command="{Binding VoltarAoPDVCommand}"
-                                Style="{DynamicResource BotaoNeutral}"
-                                FontSize="16"
-                                Height="48"/>
-                    </Grid>
-                </StackPanel>
-            </ScrollViewer>
-        </Border>
+            <!-- Feedback -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal"
+                        VerticalAlignment="Center"
+                        Visibility="{Binding TesteVisivel, Converter={StaticResource BoolToVisibility}}">
+                <Ellipse Width="8" Height="8"
+                         VerticalAlignment="Center"
+                         Margin="0,0,6,0">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="{DynamicResource NegativeBrush}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding TesteConectado}" Value="True">
+                                    <Setter Property="Fill" Value="{DynamicResource PositiveBrush}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+                <TextBlock Text="{Binding ResultadoTeste}"
+                           Foreground="{DynamicResource TextBrush}"
+                           FontSize="13" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <Button Grid.Column="1"
+                    Content="SALVAR"
+                    Command="{Binding SalvarCommand}"
+                    Style="{DynamicResource BotaoPositive}"
+                    FontSize="16" Height="48"
+                    Padding="40,0"/>
+            <Button Grid.Column="3"
+                    Content="VOLTAR (ESC)"
+                    Command="{Binding VoltarAoPDVCommand}"
+                    Style="{DynamicResource BotaoNeutral}"
+                    FontSize="16" Height="48"
+                    Padding="40,0"/>
+        </Grid>
     </Grid>
 
 </UserControl>

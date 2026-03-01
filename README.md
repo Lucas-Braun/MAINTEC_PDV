@@ -174,7 +174,7 @@ Dados completos da sessao atual. Usado no startup do app para popular o estado.
 {
     "success": true,
     "empresa": { "emp_in_codigo": 1, "emp_st_nome": "...", "emp_st_cnpj": "...", "emp_st_ie": "..." },
-    "filial": { "fil_in_codigo": 1, "fil_st_nome": "...", "fil_st_cnpj": "...", "fil_st_endereco": "...", "fil_st_cidade": "...", "fil_st_uf": "...", "fil_st_cep": "...", "fil_st_telefone": "..." },
+    "filial": { "fil_in_codigo": 1, "fil_st_nome": "...", "fil_st_cnpj": "...", "fil_st_endereco": "...", "fil_st_logradouro": "...", "fil_st_numero": "...", "fil_st_bairro": "...", "fil_st_cep": "...", "fil_st_telefone": "..." },
     "usuario": { "user_in_codigo": 1, "user_st_nome": "...", "user_st_email": "..." }
 }
 ```
@@ -550,20 +550,21 @@ X-Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000
 2. **Idempotencia** — mesma `X-Idempotency-Key` = mesmo resultado (tabela `pdv_idempotency`, expira em 24h)
 3. **Caixa obrigatorio** — nao existe venda sem caixa aberto
 4. **Baixa de estoque automatica** — via `EstoqueHelper` ao finalizar
+5. **Grava direto em `ven_notafiscal`** — NAO usa `ven_pedidovenda` intermediario. O `nf_in_codigo` retornado e o ID principal da venda
 
 ---
 
 #### GET /vendas
 
-Lista vendas PDV com filtros.
+Lista vendas PDV com filtros. Consulta direto de `ven_notafiscal` (modelo 65 / NFC-e).
 
 **Query:**
 | Parametro | Default | Descricao |
 |-----------|---------|-----------|
 | `data_inicio` | hoje | Data inicio (YYYY-MM-DD) |
 | `data_fim` | hoje | Data fim (YYYY-MM-DD) |
-| `status` | todos | `VEN_FIN`, `VEN_CAN`, `VEN_EST`, `VEN_FAT`, `todos` |
-| `pedido` | — | Numero do pedido |
+| `status` | todos | `NFE_AUT`, `NFE_REJ`, `NFE_CAN`, `VEN_CAN`, `todos` |
+| `nf` | — | Numero da NF (`nf_in_codigo`) |
 | `caixa` | — | Numero do caixa |
 | `limit` | 50 | Max 200 |
 
@@ -573,11 +574,12 @@ Lista vendas PDV com filtros.
     "success": true,
     "vendas": [
         {
-            "ped_in_codigo": 12345,
+            "nf_in_codigo": 678,
+            "nf_numero": 123,
             "data": "2026-02-28T14:30:00",
             "hora": "14:30",
-            "status": "VEN_FIN",
-            "status_nome": "Finalizada",
+            "status": "NFE_AUT",
+            "status_nome": "Autorizada",
             "status_cor": "#28a745",
             "total": 91.80,
             "qtd_itens": 2,
@@ -585,14 +587,8 @@ Lista vendas PDV com filtros.
             "cpf_nota": null,
             "forma_pagamento": "Dinheiro",
             "caixa": 5,
-            "nfce": {
-                "numero": 678,
-                "numero_nf": 123,
-                "status": "NFE_AUT",
-                "status_nome": "Autorizada",
-                "status_cor": "#28a745",
-                "chave": "3526..."
-            }
+            "chave": "3526...",
+            "motivo_rejeicao": null
         }
     ],
     "total_registros": 1,
@@ -600,29 +596,64 @@ Lista vendas PDV com filtros.
 }
 ```
 
+**NOTA:** As vendas PDV sao gravadas diretamente em `ven_notafiscal` (NFC-e modelo 65), nao usam `ven_pedidovenda`.
+
 ---
 
-#### GET /venda/{ped_in_codigo}
+#### GET /venda/{nf_in_codigo}
 
-Dados do pedido com itens.
+Dados da venda (ven_notafiscal) com itens (ven_itemnotafiscal).
 
 **Response:**
 ```json
 {
     "success": true,
-    "pedido": { "ped_in_codigo": 12345, "ped_re_valortotal": 91.80, "..." },
+    "venda": {
+        "nf_in_codigo": 678,
+        "valor_total": 91.80,
+        "valor_recebido": 100.00,
+        "troco": 0,
+        "status": "NFE_AUT",
+        "status_nome": "Autorizada",
+        "data_emissao": "2026-02-28T14:30:00",
+        "cpf_nota": "***456789**",
+        "tipo_documento": "NFC-e",
+        "forma_pagamento": "Dinheiro",
+        "qtd_itens": 2,
+        "nfce": {
+            "numero": 678,
+            "status": "NFE_AUT",
+            "chave": "3526...",
+            "mensagem": null,
+            "autorizada": true,
+            "rejeitada": false,
+            "processando": false
+        }
+    },
     "itens": [
-        { "itp_in_codigo": 1, "pro_in_codigo": 123, "itp_st_descricao": "Arroz 5kg", "itp_re_quantidade": 2, "itp_re_valor_unitario": 45.90, "itp_re_valortotal": 91.80, "..." }
+        {
+            "sequencia": 1,
+            "pro_in_codigo": 123,
+            "codigo": "ARR001",
+            "descricao": "Arroz Tipo 1 5kg",
+            "unidade": "UN",
+            "quantidade": 2.0,
+            "preco_unitario": 45.90,
+            "total": 91.80,
+            "ean": "7891234567890",
+            "ncm": "10063021",
+            "cfop": "5102"
+        }
     ]
 }
 ```
 
 ---
 
-#### POST /venda/{ped_in_codigo}/estornar
+#### POST /venda/{nf_in_codigo}/estornar
 
-Estorna venda PDV. Cria movimento ES negativo, devolve estoque, cancela pedido.
-So funciona se nao tiver NFC-e autorizada (cancelar NFC-e primeiro).
+Estorna venda PDV. Cancela a NF, cria movimento ES negativo no caixa, devolve estoque.
+So funciona se NFC-e **nao** estiver autorizada (cancelar NFC-e via SEFAZ primeiro).
 
 **Body:**
 ```json
@@ -633,14 +664,20 @@ So funciona se nao tiver NFC-e autorizada (cancelar NFC-e primeiro).
 ```json
 {
     "success": true,
-    "message": "Venda #12345 estornada",
-    "resultado": { "..." }
+    "message": "Venda #678 estornada",
+    "resultado": {
+        "nf_in_codigo": 678,
+        "mov_estorno": 15,
+        "valor_estornado": 91.80
+    }
 }
 ```
 
 **Erros:**
 - 400: Motivo obrigatorio
-- 400: Venda com NFC-e autorizada (cancelar NFC-e antes)
+- 400: NFC-e autorizada (cancelar NFC-e antes via `/nfce/<id>/cancelar`)
+- 400: NF ja cancelada
+- 404: NF nao encontrada
 
 ---
 
@@ -905,9 +942,12 @@ Busca cliente por nome ou CPF/CNPJ.
 {
     "success": true,
     "clientes": [
-        { "agn_in_codigo": 42, "agn_st_nome": "Joao Silva", "agn_st_cnpj_cpf": "123.456.789-00", "agn_st_email": "joao@email.com", "agn_st_telefone": "(11) 99999-0000" }
+        { "agn_in_codigo": 42, "agn_st_nome": "Joao Silva", "agn_st_cnpj_cpf": "123.456.789-00", "agn_st_email": "joao@email.com", "agn_st_telefone": "11999990000" }
     ]
 }
+```
+
+**NOTA:** `agn_st_email` vem de `glo_agente_email` (principal) e `agn_st_telefone` vem de `glo_agente_contatos` (principal). Podem ser `null` se nao cadastrados.
 ```
 
 **Response (busca por doc — unico ou null):**
@@ -1191,7 +1231,8 @@ Health check / keep-alive. Valida que o token ainda e valido.
    GET /caixa/resumo
 
 10. Consulta:
-    GET /vendas?data_inicio=...&status=...
+    GET /vendas?data_inicio=...&status=...      (ven_notafiscal)
+    GET /venda/<nf_in_codigo>                    (detalhe + itens)
     GET /nfce?data_inicio=...&status=...
 
 11. Fechar caixa:
@@ -1248,9 +1289,9 @@ lib/backend/decorators/
 | 13 | GET | `/caixa/resumo` | Resumo detalhado | 30/min |
 | 14 | GET | `/caixa/movimentos` | Listar movimentos | 30/min |
 | 15 | POST | `/venda/finalizar-direto` | Criar + finalizar venda | 30/min |
-| 16 | GET | `/vendas` | Listar vendas | 30/min |
-| 17 | GET | `/venda/<id>` | Detalhe pedido + itens | 30/min |
-| 18 | POST | `/venda/<id>/estornar` | Estornar venda | 10/min |
+| 16 | GET | `/vendas` | Listar vendas (ven_notafiscal) | 30/min |
+| 17 | GET | `/venda/<nf_in_codigo>` | Detalhe venda + itens | 30/min |
+| 18 | POST | `/venda/<nf_in_codigo>/estornar` | Estornar venda | 10/min |
 | 19 | GET | `/produto/buscar` | Buscar por nome | 60/min |
 | 20 | GET | `/produto/buscar-codigo` | Buscar por EAN | 60/min |
 | 21 | POST | `/calcular-impostos` | Preview impostos | 60/min |

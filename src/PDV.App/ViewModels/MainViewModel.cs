@@ -50,6 +50,7 @@ public partial class MainViewModel : ObservableObject
         if (_pdvVmAtual == null)
         {
             _pdvVmAtual = _services.GetRequiredService<PDVViewModel>();
+            _pdvVmAtual.MensagemOperador = NomeOperador;
             ConfigurarCallbacksPDV(_pdvVmAtual);
         }
         TelaAtual = _pdvVmAtual;
