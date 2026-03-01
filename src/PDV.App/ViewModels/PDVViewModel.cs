@@ -10,30 +10,24 @@ namespace PDV.App.ViewModels;
 
 public partial class PDVViewModel : ObservableObject
 {
-    private readonly IVendaService _vendaService;
     private readonly IProdutoService _produtoService;
-    private readonly ICaixaService _caixaService;
-    private readonly INFCeService _nfceService;
-    private readonly ITEFService _tefService;
-    private readonly IImpressoraService _impressoraService;
     private readonly IApiClient _apiClient;
+    private readonly ISessaoService _sessao;
+    private readonly IImpressoraService _impressoraService;
+    private readonly ITEFService _tefService;
 
     public PDVViewModel(
-        IVendaService vendaService,
         IProdutoService produtoService,
-        ICaixaService caixaService,
-        INFCeService nfceService,
-        ITEFService tefService,
+        IApiClient apiClient,
+        ISessaoService sessao,
         IImpressoraService impressoraService,
-        IApiClient apiClient)
+        ITEFService tefService)
     {
-        _vendaService = vendaService;
         _produtoService = produtoService;
-        _caixaService = caixaService;
-        _nfceService = nfceService;
-        _tefService = tefService;
-        _impressoraService = impressoraService;
         _apiClient = apiClient;
+        _sessao = sessao;
+        _impressoraService = impressoraService;
+        _tefService = tefService;
 
         VendaAtual = new Venda();
         Itens = new ObservableCollection<ItemVenda>();
@@ -253,56 +247,70 @@ public partial class PDVViewModel : ObservableObject
                 pag.BandeiraCartao = resultadoTef.Bandeira;
             }
 
-            // 2. Salva venda localmente
+            // 2. Monta itens e parcelas para a API
+            var itensApi = Itens.Select(i => new ItemVendaApi
+            {
+                ProInCodigo = i.ProdutoId,
+                Quantidade = i.Quantidade,
+                PrecoUnitario = i.PrecoUnitario,
+                DescontoPerc = i.DescontoPercentual > 0 ? i.DescontoPercentual : null
+            }).ToList();
+
+            var parcelasApi = pagamentos.Select(p => new ParcelaApi
+            {
+                FcbInCodigo = p.FcbInCodigo,
+                Valor = p.Valor,
+                Vencimento = DateTime.Now.ToString("yyyy-MM-dd")
+            }).ToList();
+
+            // Calcula troco
+            decimal? troco = pagamentos
+                .Where(p => p.FormaPagamento == FormaPagamento.Dinheiro && p.Troco > 0)
+                .Sum(p => p.Troco);
+            if (troco == 0) troco = null;
+
+            var idempotencyKey = Guid.NewGuid().ToString();
+
+            // 3. Finaliza venda na API (servidor faz NFC-e, preco, estoque)
+            MensagemStatus = "Finalizando venda...";
+            var resultado = await _apiClient.FinalizarVendaDireta(
+                itensApi, parcelasApi,
+                VendaAtual.ClienteCpfCnpj, troco, idempotencyKey);
+
+            if (!resultado.Sucesso)
+            {
+                MensagemStatus = $"Erro na venda: {resultado.Erro}";
+                return;
+            }
+
+            // 4. Popula venda local com resultado da API
             VendaAtual.Pagamentos = pagamentos;
             VendaAtual.Status = StatusVenda.Finalizada;
             VendaAtual.DataVenda = DateTime.Now;
-            await _vendaService.SalvarVenda(VendaAtual);
+            VendaAtual.NumeroVenda = resultado.PedidoCodigo?.ToString() ?? "";
+            VendaAtual.ChaveNFCe = resultado.NfceChave;
 
-            // 3. Emite NFC-e
-            MensagemStatus = "Emitindo NFC-e...";
-            var resultadoNfce = await _nfceService.EmitirNFCe(VendaAtual);
-
-            if (resultadoNfce.Autorizada)
+            if (resultado.NfceStatus == "NFE_AUT")
             {
-                VendaAtual.ChaveNFCe = resultadoNfce.ChaveAcesso;
-                VendaAtual.NumeroNFCe = resultadoNfce.NumeroNFCe;
-                VendaAtual.ProtocoloAutorizacao = resultadoNfce.Protocolo;
-            }
-            else
-            {
-                VendaAtual.Status = StatusVenda.Contingencia;
-                MensagemStatus = "NFC-e em contingencia - sera enviada depois";
+                VendaAtual.Status = StatusVenda.Finalizada;
             }
 
-            // 4. Imprime cupom (nao deve impedir a venda)
-            try
-            {
-                MensagemStatus = "Imprimindo cupom...";
-                await _impressoraService.ImprimirCupom(VendaAtual);
-            }
-            catch
-            {
-                // Impressora indisponivel - venda ja foi salva
-            }
-
-            // 5. Sincroniza com ERP em background
-            _ = Task.Run(async () =>
+            // 5. Imprime cupom (nao deve impedir a venda)
+            if (_sessao.Configuracao?.ImprimirCupom == true)
             {
                 try
                 {
-                    await _apiClient.EnviarVenda(VendaAtual);
-                    VendaAtual.SincronizadoERP = true;
-                    VendaAtual.DataSincronizacao = DateTime.Now;
+                    MensagemStatus = "Imprimindo cupom...";
+                    await _impressoraService.ImprimirCupom(VendaAtual);
                 }
                 catch
                 {
-                    // Sera sincronizado depois pelo SyncManager
+                    // Impressora indisponivel - venda ja foi salva
                 }
-            });
+            }
 
             // 6. Navega para tela de comprovante
-            MensagemStatus = $"Venda #{VendaAtual.NumeroVenda} finalizada! Total: {VendaAtual.ValorTotal:C2}";
+            MensagemStatus = $"Venda #{resultado.PedidoCodigo} finalizada! Total: {resultado.ValorVenda:C2}";
             VendaFinalizada?.Invoke(VendaAtual);
         }
         catch (Exception ex)
@@ -316,14 +324,9 @@ public partial class PDVViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task CancelarVenda()
+    private void CancelarVenda()
     {
         if (!VendaEmAndamento) return;
-
-        if (VendaAtual.ChaveNFCe != null)
-        {
-            await _nfceService.CancelarNFCe(VendaAtual.ChaveNFCe, "Cancelamento a pedido do cliente");
-        }
 
         NovaVenda();
         MensagemStatus = "Venda cancelada";

@@ -7,12 +7,10 @@ namespace PDV.App.ViewModels;
 public partial class LoginViewModel : ObservableObject
 {
     private readonly IOperadorService _operadorService;
-    private readonly IApiClient _apiClient;
 
-    public LoginViewModel(IOperadorService operadorService, IApiClient apiClient)
+    public LoginViewModel(IOperadorService operadorService)
     {
         _operadorService = operadorService;
-        _apiClient = apiClient;
     }
 
     // Callback chamado pelo MainViewModel quando login tem sucesso
@@ -29,9 +27,6 @@ public partial class LoginViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _processando = false;
-
-    [ObservableProperty]
-    private bool _erpConectado = false;
 
     [RelayCommand]
     private async Task Entrar()
@@ -61,13 +56,6 @@ public partial class LoginViewModel : ObservableObject
                 return;
             }
 
-            // Tenta autenticar no ERP em background (nao trava o login)
-            _ = Task.Run(async () =>
-            {
-                try { ErpConectado = await _apiClient.Autenticar(Login, Senha); }
-                catch { ErpConectado = false; }
-            });
-
             LoginSucesso?.Invoke(operador.Nome);
         }
         catch (Exception ex)
@@ -78,12 +66,5 @@ public partial class LoginViewModel : ObservableObject
         {
             Processando = false;
         }
-    }
-
-    [RelayCommand]
-    private async Task VerificarConexaoErp()
-    {
-        try { ErpConectado = await _apiClient.VerificarConexao(); }
-        catch { ErpConectado = false; }
     }
 }

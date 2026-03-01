@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PDV.Core.Enums;
 using PDV.Core.Interfaces;
 using PDV.Core.Models;
+using PDV.Infrastructure.Api;
 
 namespace PDV.App.ViewModels;
 
@@ -31,6 +32,10 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void NavegarParaLogin()
     {
+        // Para o keep-alive ao voltar para login
+        var keepAlive = _services.GetService<ApiKeepAliveService>();
+        keepAlive?.Parar();
+
         var loginVm = _services.GetRequiredService<LoginViewModel>();
         loginVm.LoginSucesso = OnLoginSucesso;
         TelaAtual = loginVm;
@@ -66,19 +71,18 @@ public partial class MainViewModel : ObservableObject
         NomeOperador = nomeOperador;
         OperadorLogado = true;
 
-        // Verifica se ja tem caixa aberto
-        var operadorService = _services.GetRequiredService<IOperadorService>();
-        var caixaService = _services.GetRequiredService<ICaixaService>();
+        // Inicia keep-alive apos login
+        var keepAlive = _services.GetService<ApiKeepAliveService>();
+        keepAlive?.Iniciar();
 
-        var operador = operadorService.OperadorLogado;
-        if (operador != null)
+        // Verifica se ja tem caixa aberto via API
+        var apiClient = _services.GetRequiredService<IApiClient>();
+        var status = await apiClient.ObterStatusCaixa();
+
+        if (status.Sucesso && status.CaixaAberto)
         {
-            var caixaAberto = await caixaService.ObterCaixaAberto(operador.Id);
-            if (caixaAberto != null)
-            {
-                NavegarParaPDV();
-                return;
-            }
+            NavegarParaPDV();
+            return;
         }
 
         NavegarParaAberturaCaixa();
@@ -117,21 +121,10 @@ public partial class MainViewModel : ObservableObject
         TelaAtual = vm;
     }
 
-    private async void NavegarParaSangriaSuprimento(TipoMovimentoCaixa tipo)
+    private void NavegarParaSangriaSuprimento(TipoMovimentoCaixa tipo)
     {
         var vm = _services.GetRequiredService<SangriaSuprimentoViewModel>();
         vm.Tipo = tipo;
-
-        var operadorService = _services.GetRequiredService<IOperadorService>();
-        var caixaService = _services.GetRequiredService<ICaixaService>();
-        var operador = operadorService.OperadorLogado;
-        if (operador != null)
-        {
-            var caixa = await caixaService.ObterCaixaAberto(operador.Id);
-            if (caixa != null)
-                vm.CarregarDadosCaixa(caixa);
-        }
-
         vm.Confirmado = () =>
         {
             TelaAtual = _pdvVmAtual;
@@ -143,15 +136,10 @@ public partial class MainViewModel : ObservableObject
         TelaAtual = vm;
     }
 
-    private async void NavegarParaFechamentoCaixa()
+    private void NavegarParaFechamentoCaixa()
     {
         var vm = _services.GetRequiredService<FechamentoCaixaViewModel>();
-
-        var operadorService = _services.GetRequiredService<IOperadorService>();
-        var operador = operadorService.OperadorLogado;
-        if (operador != null)
-            await vm.CarregarCaixaAberto(operador.Id);
-
+        _ = vm.CarregarResumoCaixa();
         vm.CaixaFechado = () => NavegarParaLogin();
         vm.Cancelado = () => TelaAtual = _pdvVmAtual;
         TelaAtual = vm;
@@ -179,6 +167,8 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void Logout()
     {
+        var operadorService = _services.GetRequiredService<IOperadorService>();
+        operadorService.Logout();
         NavegarParaLogin();
     }
 }

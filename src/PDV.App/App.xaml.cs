@@ -37,7 +37,7 @@ public partial class App : Application
             "PDV");
         Directory.CreateDirectory(dataPath);
 
-        // Banco SQLite local
+        // Banco SQLite local (cache opcional, fora do caminho critico)
         var dbPath = Path.Combine(dataPath, "pdv.db");
         services.AddDbContext<PdvDbContext>(options =>
             options.UseSqlite($"Data Source={dbPath}"),
@@ -49,7 +49,7 @@ public partial class App : Application
 
         var apiConfig = new ErpApiConfig
         {
-            BaseUrl = "http://localhost:5000",
+            BaseUrl = configApp.ApiUrl,
             TimeoutSeconds = 30
         };
 
@@ -71,12 +71,18 @@ public partial class App : Application
         services.AddSingleton(apiConfig);
         services.AddSingleton(impressoraConfig);
 
-        // HttpClient
+        // Sessao (singleton in-memory)
+        services.AddSingleton<ISessaoService, SessaoService>();
+
+        // HttpClient + API client
         services.AddHttpClient<IApiClient, ErpApiClient>(client =>
         {
             client.BaseAddress = new Uri(apiConfig.BaseUrl);
             client.Timeout = TimeSpan.FromSeconds(apiConfig.TimeoutSeconds);
         });
+
+        // Keep-alive
+        services.AddSingleton<ApiKeepAliveService>();
 
         // Servicos de infraestrutura
         services.AddSingleton<IImpressoraService, ImpressoraService>();
@@ -85,9 +91,9 @@ public partial class App : Application
 
         // Servicos de negocio
         services.AddSingleton<IOperadorService, OperadorService>();
-        services.AddTransient<IVendaService, VendaService>();
         services.AddTransient<ICaixaService, CaixaService>();
         services.AddTransient<IProdutoService, ProdutoService>();
+        services.AddTransient<IVendaService, VendaService>();
 
         // ViewModels
         services.AddSingleton<MainViewModel>();
@@ -107,7 +113,7 @@ public partial class App : Application
         _serviceProvider = services.BuildServiceProvider();
         Services = _serviceProvider;
 
-        // Cria banco e aplica migrations automaticamente
+        // Cria banco local (cache opcional)
         using (var scope = _serviceProvider.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<PdvDbContext>();
@@ -127,7 +133,14 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        _serviceProvider?.Dispose();
+        if (_serviceProvider != null)
+        {
+            // Para keep-alive
+            var keepAlive = _serviceProvider.GetService<ApiKeepAliveService>();
+            keepAlive?.Dispose();
+
+            _serviceProvider.Dispose();
+        }
         base.OnExit(e);
     }
 }

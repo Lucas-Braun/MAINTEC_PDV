@@ -7,6 +7,7 @@ public class Pagamento
     public int Id { get; set; }
     public int VendaId { get; set; }
     public FormaPagamento FormaPagamento { get; set; }
+    public int FcbInCodigo { get; set; }
     public decimal Valor { get; set; }
 
     // TEF

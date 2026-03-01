@@ -1,39 +1,69 @@
-using Microsoft.EntityFrameworkCore;
 using PDV.Core.Interfaces;
 using PDV.Core.Models;
-using PDV.Infrastructure.LocalDb;
 
 namespace PDV.Infrastructure.Services;
 
 public class OperadorService : IOperadorService
 {
-    private readonly PdvDbContext _db;
+    private readonly IApiClient _apiClient;
+    private readonly ISessaoService _sessao;
 
     public Operador? OperadorLogado { get; private set; }
 
-    public OperadorService(PdvDbContext db)
+    public OperadorService(IApiClient apiClient, ISessaoService sessao)
     {
-        _db = db;
+        _apiClient = apiClient;
+        _sessao = sessao;
     }
 
     public async Task<Operador?> Autenticar(string login, string senha)
     {
-        // TODO: Implementar hash de senha quando tiver tela de cadastro
-        // Por enquanto aceita senha "123" para todos os operadores do seed
-        var operador = await _db.Operadores
-            .FirstOrDefaultAsync(o => o.Login.ToLower() == login.ToLower());
+        var resultado = await _apiClient.Login(login, senha);
 
-        if (operador != null && senha == "123")
+        if (!resultado.Sucesso || resultado.Token == null || resultado.Usuario == null)
+            return null;
+
+        // Popula sessao com dados do login
+        _sessao.DefinirSessao(
+            resultado.Token,
+            resultado.Usuario,
+            resultado.Empresa ?? new EmpresaSessao(),
+            resultado.Filial ?? new FilialSessao(),
+            resultado.Filiais ?? new()
+        );
+
+        // Carrega config, formas de pagamento e config terminal em paralelo
+        var configTask = _apiClient.ObterConfiguracao();
+        var formasTask = _apiClient.ObterFormasPagamento();
+        var terminalTask = _apiClient.ObterConfigTerminal();
+
+        await Task.WhenAll(configTask, formasTask, terminalTask);
+
+        var config = await configTask;
+        if (config != null) _sessao.DefinirConfiguracao(config);
+
+        var formas = await formasTask;
+        _sessao.DefinirFormasPagamento(formas);
+
+        var terminal = await terminalTask;
+        if (terminal != null) _sessao.DefinirConfigTerminal(terminal);
+
+        // Cria operador local para compatibilidade
+        OperadorLogado = new Operador
         {
-            OperadorLogado = operador;
-            return operador;
-        }
+            Id = resultado.Usuario.Id,
+            Nome = resultado.Usuario.Nome,
+            Login = login,
+            Perfil = "caixa",
+            Ativo = true
+        };
 
-        return null;
+        return OperadorLogado;
     }
 
     public void Logout()
     {
         OperadorLogado = null;
+        _sessao.Limpar();
     }
 }

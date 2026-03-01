@@ -1,34 +1,84 @@
+using System.Text.Json.Serialization;
+
 namespace PDV.Infrastructure.Api.DTOs;
 
-public class VendaDTO
+public class FinalizarVendaRequest
 {
-    public string NumeroVenda { get; set; } = string.Empty;
-    public DateTime DataVenda { get; set; }
-    public string? ClienteCpfCnpj { get; set; }
-    public decimal ValorTotal { get; set; }
-    public decimal DescontoTotal { get; set; }
-    public string? ChaveNfce { get; set; }
-    public int? NumeroNfce { get; set; }
-    public List<ItemVendaDTO> Itens { get; set; } = new();
-    public List<PagamentoDTO> Pagamentos { get; set; } = new();
+    [JsonPropertyName("itens")]
+    public List<ItemVendaApiDTO> Itens { get; set; } = new();
+
+    [JsonPropertyName("parcelas")]
+    public List<ParcelaApiDTO> Parcelas { get; set; } = new();
+
+    [JsonPropertyName("cpf_nota")]
+    public string? CpfNota { get; set; }
+
+    [JsonPropertyName("troco")]
+    public decimal? Troco { get; set; }
 }
 
-public class ItemVendaDTO
+public class ItemVendaApiDTO
 {
-    public int ProdutoId { get; set; }
-    public string CodigoBarras { get; set; } = string.Empty;
+    [JsonPropertyName("pro_in_codigo")]
+    public int ProInCodigo { get; set; }
+
+    [JsonPropertyName("quantidade")]
     public decimal Quantidade { get; set; }
-    public decimal PrecoUnitario { get; set; }
-    public decimal DescontoValor { get; set; }
-    public decimal ValorTotal { get; set; }
+
+    [JsonPropertyName("preco_unitario")]
+    public decimal? PrecoUnitario { get; set; }
+
+    [JsonPropertyName("desconto_perc")]
+    public decimal? DescontoPerc { get; set; }
 }
 
-public class PagamentoDTO
+public class ParcelaApiDTO
 {
-    public int FormaPagamento { get; set; }
+    [JsonPropertyName("fcb_in_codigo")]
+    public int FcbInCodigo { get; set; }
+
+    [JsonPropertyName("valor")]
     public decimal Valor { get; set; }
-    public string? Nsu { get; set; }
-    public string? CodigoAutorizacao { get; set; }
-    public string? BandeiraCartao { get; set; }
-    public int? Parcelas { get; set; }
+
+    [JsonPropertyName("vencimento")]
+    public string? Vencimento { get; set; }
+}
+
+public class FinalizarVendaResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+
+    [JsonPropertyName("error")]
+    public string? Error { get; set; }
+
+    [JsonPropertyName("from_cache")]
+    public bool? FromCache { get; set; }
+
+    [JsonPropertyName("resultado")]
+    public ResultadoVendaDTO? Resultado { get; set; }
+}
+
+public class ResultadoVendaDTO
+{
+    [JsonPropertyName("ped_in_codigo")]
+    public int PedInCodigo { get; set; }
+
+    [JsonPropertyName("nf_in_codigo")]
+    public int? NfInCodigo { get; set; }
+
+    [JsonPropertyName("valor_venda")]
+    public decimal? ValorVenda { get; set; }
+
+    [JsonPropertyName("troco")]
+    public decimal? Troco { get; set; }
+
+    [JsonPropertyName("nfce_status")]
+    public string? NfceStatus { get; set; }
+
+    [JsonPropertyName("nfce_chave")]
+    public string? NfceChave { get; set; }
 }

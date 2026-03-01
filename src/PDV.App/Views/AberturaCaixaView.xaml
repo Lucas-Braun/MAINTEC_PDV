@@ -26,16 +26,31 @@
                            HorizontalAlignment="Center"
                            Margin="0,0,0,32"/>
 
-                <!-- Numero do Caixa -->
-                <TextBlock Text="NUMERO DO CAIXA"
-                           Style="{DynamicResource LabelPDV}"/>
+                <!-- Terminal (ComboBox - visivel quando nao e fixo) -->
+                <StackPanel Visibility="{Binding UsarTerminalFixo, Converter={StaticResource InvertBoolToVisibility}}">
+                    <TextBlock Text="TERMINAL"
+                               Style="{DynamicResource LabelPDV}"/>
 
-                <TextBox Text="{Binding NumeroCaixa, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{DynamicResource TextBoxPDV}"
-                         FontSize="18"
-                         Padding="12,10"
-                         Margin="0,0,0,16"
-                         x:Name="TxtNumeroCaixa"/>
+                    <ComboBox Style="{DynamicResource ComboBoxPDV}"
+                              ItemsSource="{Binding Terminais}"
+                              SelectedItem="{Binding TerminalSelecionado}"
+                              DisplayMemberPath="Nome"
+                              Margin="0,0,0,16"/>
+                </StackPanel>
+
+                <!-- Terminal fixo (read-only - visivel quando e fixo) -->
+                <StackPanel Visibility="{Binding UsarTerminalFixo, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="TERMINAL"
+                               Style="{DynamicResource LabelPDV}"/>
+
+                    <Border Background="{DynamicResource SurfaceLightBrush}"
+                            CornerRadius="6" Padding="12,10"
+                            Margin="0,0,0,16">
+                        <TextBlock Text="{Binding NomeTerminalFixo}"
+                                   Foreground="{DynamicResource TextBrush}"
+                                   FontSize="16"/>
+                    </Border>
+                </StackPanel>
 
                 <!-- Valor de Abertura -->
                 <TextBlock Text="VALOR DE ABERTURA (R$)"

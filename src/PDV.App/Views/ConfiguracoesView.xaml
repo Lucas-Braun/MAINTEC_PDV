@@ -201,6 +201,31 @@
                         </Grid>
                     </Border>
 
+                    <!-- ====== SECAO API ====== -->
+                    <TextBlock Text="API"
+                               Style="{DynamicResource LabelPDV}"
+                               Margin="0,0,0,10"/>
+
+                    <Border Background="{DynamicResource SurfaceLightBrush}"
+                            CornerRadius="8"
+                            Padding="16,12"
+                            Margin="0,0,0,24">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="URL:"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       FontSize="13" VerticalAlignment="Center"
+                                       Margin="0,0,12,0"/>
+                            <TextBox Grid.Column="1"
+                                     Style="{DynamicResource TextBoxPDV}"
+                                     Text="{Binding ApiUrl, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+                    </Border>
+
                     <!-- ====== SECAO SISTEMA ====== -->
                     <TextBlock Text="SISTEMA"
                                Style="{DynamicResource LabelPDV}"

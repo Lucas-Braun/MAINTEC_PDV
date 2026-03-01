@@ -1,24 +1,26 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PDV.Core.Interfaces;
+using PDV.Core.Models;
+using System.Collections.ObjectModel;
 
 namespace PDV.App.ViewModels;
 
 public partial class AberturaCaixaViewModel : ObservableObject
 {
     private readonly ICaixaService _caixaService;
-    private readonly IOperadorService _operadorService;
+    private readonly ISessaoService _sessao;
 
-    public AberturaCaixaViewModel(ICaixaService caixaService, IOperadorService operadorService)
+    public AberturaCaixaViewModel(ICaixaService caixaService, ISessaoService sessao)
     {
         _caixaService = caixaService;
-        _operadorService = operadorService;
+        _sessao = sessao;
+
+        // Carrega configuracao de terminais
+        CarregarTerminais();
     }
 
     public Action? CaixaAberto { get; set; }
-
-    [ObservableProperty]
-    private int _numeroCaixa = 1;
 
     [ObservableProperty]
     private decimal _valorAbertura;
@@ -29,6 +31,38 @@ public partial class AberturaCaixaViewModel : ObservableObject
     [ObservableProperty]
     private bool _processando = false;
 
+    [ObservableProperty]
+    private bool _usarTerminalFixo;
+
+    [ObservableProperty]
+    private ObservableCollection<TerminalInfo> _terminais = new();
+
+    [ObservableProperty]
+    private TerminalInfo? _terminalSelecionado;
+
+    [ObservableProperty]
+    private string _nomeTerminalFixo = string.Empty;
+
+    private void CarregarTerminais()
+    {
+        var config = _sessao.ConfigTerminal;
+        if (config == null) return;
+
+        UsarTerminalFixo = config.UsarTerminalFixo;
+
+        if (config.UsarTerminalFixo && config.TerminalOperador != null)
+        {
+            NomeTerminalFixo = config.TerminalOperador.Nome;
+            TerminalSelecionado = config.TerminalOperador;
+        }
+        else
+        {
+            Terminais = new ObservableCollection<TerminalInfo>(config.Terminais);
+            if (Terminais.Count > 0)
+                TerminalSelecionado = Terminais[0];
+        }
+    }
+
     [RelayCommand]
     private async Task AbrirCaixa()
     {
@@ -37,14 +71,25 @@ public partial class AberturaCaixaViewModel : ObservableObject
             Processando = true;
             MensagemErro = string.Empty;
 
-            var operador = _operadorService.OperadorLogado;
-            if (operador == null)
+            int? terInCodigo = null;
+            if (!UsarTerminalFixo)
             {
-                MensagemErro = "Operador nao identificado";
+                if (TerminalSelecionado == null)
+                {
+                    MensagemErro = "Selecione um terminal";
+                    return;
+                }
+                terInCodigo = TerminalSelecionado.TerInCodigo;
+            }
+
+            var resultado = await _caixaService.AbrirCaixa(ValorAbertura, terInCodigo);
+
+            if (!resultado.Sucesso)
+            {
+                MensagemErro = resultado.Erro ?? "Erro ao abrir caixa";
                 return;
             }
 
-            await _caixaService.AbrirCaixa(operador.Id, NumeroCaixa, ValorAbertura);
             CaixaAberto?.Invoke();
         }
         catch (Exception ex)

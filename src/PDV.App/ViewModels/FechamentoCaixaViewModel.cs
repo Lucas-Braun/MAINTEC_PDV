@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PDV.Core.Interfaces;
-using PDV.Core.Models;
 
 namespace PDV.App.ViewModels;
 
@@ -21,9 +20,6 @@ public partial class FechamentoCaixaViewModel : ObservableObject
     public Action? Cancelado { get; set; }
 
     [ObservableProperty]
-    private Caixa? _caixaAtual;
-
-    [ObservableProperty]
     private decimal _valorFechamento;
 
     [ObservableProperty]
@@ -32,34 +28,49 @@ public partial class FechamentoCaixaViewModel : ObservableObject
     [ObservableProperty]
     private bool _processando = false;
 
-    // Propriedades somente-leitura do caixa
-    public decimal TotalVendas => CaixaAtual?.TotalVendas ?? 0;
-    public decimal TotalDinheiro => CaixaAtual?.TotalDinheiro ?? 0;
-    public decimal TotalCartaoCredito => CaixaAtual?.TotalCartaoCredito ?? 0;
-    public decimal TotalCartaoDebito => CaixaAtual?.TotalCartaoDebito ?? 0;
-    public decimal TotalPix => CaixaAtual?.TotalPix ?? 0;
-    public decimal TotalSangria => CaixaAtual?.TotalSangria ?? 0;
-    public decimal TotalSuprimento => CaixaAtual?.TotalSuprimento ?? 0;
-    public decimal ValorAbertura => CaixaAtual?.ValorAbertura ?? 0;
-    public decimal SaldoEsperado => CaixaAtual?.SaldoEsperado ?? 0;
-    public decimal Diferenca => ValorFechamento - SaldoEsperado;
+    // Totais vindos do resumo da API
+    [ObservableProperty]
+    private decimal _totalVendas;
 
-    partial void OnCaixaAtualChanged(Caixa? value)
-    {
-        AtualizarTotais();
-    }
+    [ObservableProperty]
+    private decimal _totalSangrias;
+
+    [ObservableProperty]
+    private decimal _totalSuprimentos;
+
+    [ObservableProperty]
+    private decimal _totalEstornos;
+
+    [ObservableProperty]
+    private decimal _valorAbertura;
+
+    [ObservableProperty]
+    private decimal _saldoEsperado;
+
+    public decimal Diferenca => ValorFechamento - SaldoEsperado;
 
     partial void OnValorFechamentoChanged(decimal value)
     {
         OnPropertyChanged(nameof(Diferenca));
     }
 
-    public async Task CarregarCaixaAberto(int operadorId)
+    public async Task CarregarResumoCaixa()
     {
         try
         {
             Processando = true;
-            CaixaAtual = await _caixaService.ObterCaixaAberto(operadorId);
+            var resumo = await _caixaService.ObterResumoCaixa();
+
+            if (resumo.Sucesso)
+            {
+                TotalVendas = resumo.TotalVendas;
+                TotalSangrias = resumo.TotalSangrias;
+                TotalSuprimentos = resumo.TotalSuprimentos;
+                TotalEstornos = resumo.TotalEstornos;
+                ValorAbertura = resumo.ValorAbertura;
+                SaldoEsperado = resumo.SaldoAtual;
+                OnPropertyChanged(nameof(Diferenca));
+            }
         }
         finally
         {
@@ -75,10 +86,13 @@ public partial class FechamentoCaixaViewModel : ObservableObject
             Processando = true;
             MensagemStatus = "Fechando caixa...";
 
-            var caixaFechado = await _caixaService.FecharCaixa(ValorFechamento);
+            var resultado = await _caixaService.FecharCaixa(ValorFechamento);
 
-            MensagemStatus = "Imprimindo relatorio...";
-            await _impressoraService.ImprimirFechamentoCaixa(caixaFechado);
+            if (!resultado.Sucesso)
+            {
+                MensagemStatus = resultado.Erro ?? "Erro ao fechar caixa";
+                return;
+            }
 
             MensagemStatus = "Caixa fechado com sucesso!";
             CaixaFechado?.Invoke();
@@ -97,19 +111,5 @@ public partial class FechamentoCaixaViewModel : ObservableObject
     private void Voltar()
     {
         Cancelado?.Invoke();
-    }
-
-    private void AtualizarTotais()
-    {
-        OnPropertyChanged(nameof(TotalVendas));
-        OnPropertyChanged(nameof(TotalDinheiro));
-        OnPropertyChanged(nameof(TotalCartaoCredito));
-        OnPropertyChanged(nameof(TotalCartaoDebito));
-        OnPropertyChanged(nameof(TotalPix));
-        OnPropertyChanged(nameof(TotalSangria));
-        OnPropertyChanged(nameof(TotalSuprimento));
-        OnPropertyChanged(nameof(ValorAbertura));
-        OnPropertyChanged(nameof(SaldoEsperado));
-        OnPropertyChanged(nameof(Diferenca));
     }
 }

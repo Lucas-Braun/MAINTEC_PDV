@@ -19,6 +19,9 @@ public class ConfiguracoesApp
     public string NomeEmpresa { get; set; } = "SUA EMPRESA LTDA";
     public string CnpjEmpresa { get; set; } = "00.000.000/0001-00";
     public string EnderecoEmpresa { get; set; } = "Rua Exemplo, 123 - Cidade/UF";
+
+    // API
+    public string ApiUrl { get; set; } = "http://localhost:5000";
 }
 
 public class ConfiguracoesService

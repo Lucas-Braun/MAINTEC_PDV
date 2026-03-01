@@ -10,12 +10,16 @@ namespace PDV.App.ViewModels;
 public partial class PagamentoViewModel : ObservableObject
 {
     private readonly ITEFService _tefService;
+    private readonly ISessaoService _sessao;
 
-    public PagamentoViewModel(ITEFService tefService)
+    public PagamentoViewModel(ITEFService tefService, ISessaoService sessao)
     {
         _tefService = tefService;
+        _sessao = sessao;
         Pagamentos = new ObservableCollection<Pagamento>();
-        FormaSelecionada = FormaPagamento.Dinheiro;
+
+        // Carrega formas de pagamento da sessao
+        CarregarFormasPagamento();
     }
 
     // Callbacks
@@ -25,6 +29,9 @@ public partial class PagamentoViewModel : ObservableObject
     // Valor total da venda (setado pelo PDV antes de navegar)
     [ObservableProperty]
     private decimal _valorTotal;
+
+    [ObservableProperty]
+    private FormaPagamentoSessao? _formaSelecionadaSessao;
 
     [ObservableProperty]
     private FormaPagamento _formaSelecionada;
@@ -47,14 +54,18 @@ public partial class PagamentoViewModel : ObservableObject
     [ObservableProperty]
     private bool _processando = false;
 
+    [ObservableProperty]
+    private ObservableCollection<FormaPagamentoSessao> _formasPagamentoDisponiveis = new();
+
     // Propriedades calculadas
     public decimal TotalPago => Pagamentos.Sum(p => p.Valor);
     public decimal ValorRestante => ValorTotal - TotalPago;
-    public decimal Troco => FormaSelecionada == FormaPagamento.Dinheiro && ValorRecebido > ValorPagamento
+    public decimal Troco => PermiteTroco && ValorRecebido > ValorPagamento
         ? ValorRecebido - ValorPagamento : 0;
     public bool PodeConfirmar => ValorRestante <= 0;
+    public bool PermiteTroco => FormaSelecionadaSessao?.PermiteTroco ?? false;
 
-    // Formas de pagamento disponiveis para binding
+    // Formas de pagamento disponiveis para binding (compatibilidade)
     public FormaPagamento[] FormasPagamento => new[]
     {
         FormaPagamento.Dinheiro,
@@ -63,11 +74,51 @@ public partial class PagamentoViewModel : ObservableObject
         FormaPagamento.PIX
     };
 
-    partial void OnFormaSelecionadaChanged(FormaPagamento value)
+    private void CarregarFormasPagamento()
     {
+        var formas = _sessao.FormasPagamento;
+        if (formas.Count > 0)
+        {
+            FormasPagamentoDisponiveis = new ObservableCollection<FormaPagamentoSessao>(formas);
+            var padrao = formas.FirstOrDefault(f => f.Padrao) ?? formas[0];
+            FormaSelecionadaSessao = padrao;
+            MapearFormaPagamento(padrao);
+        }
+        else
+        {
+            // Fallback se API nao retornou formas
+            FormaSelecionada = FormaPagamento.Dinheiro;
+        }
+    }
+
+    private void MapearFormaPagamento(FormaPagamentoSessao forma)
+    {
+        var nomeLower = forma.Nome.ToLower();
+        if (nomeLower.Contains("dinheiro"))
+            FormaSelecionada = FormaPagamento.Dinheiro;
+        else if (nomeLower.Contains("credito"))
+            FormaSelecionada = FormaPagamento.CartaoCredito;
+        else if (nomeLower.Contains("debito"))
+            FormaSelecionada = FormaPagamento.CartaoDebito;
+        else if (nomeLower.Contains("pix"))
+            FormaSelecionada = FormaPagamento.PIX;
+        else
+            FormaSelecionada = FormaPagamento.Outros;
+    }
+
+    partial void OnFormaSelecionadaSessaoChanged(FormaPagamentoSessao? value)
+    {
+        if (value != null)
+            MapearFormaPagamento(value);
+
         ValorPagamento = ValorRestante > 0 ? ValorRestante : 0;
         ValorRecebido = 0;
         Parcelas = 1;
+        AtualizarCalculos();
+    }
+
+    partial void OnFormaSelecionadaChanged(FormaPagamento value)
+    {
         AtualizarCalculos();
     }
 
@@ -101,12 +152,13 @@ public partial class PagamentoViewModel : ObservableObject
         var pagamento = new Pagamento
         {
             FormaPagamento = FormaSelecionada,
+            FcbInCodigo = FormaSelecionadaSessao?.FcbInCodigo ?? 0,
             Valor = valorEfetivo,
             Parcelas = FormaSelecionada == FormaPagamento.CartaoCredito ? Parcelas : null,
             DataPagamento = DateTime.Now
         };
 
-        if (FormaSelecionada == FormaPagamento.Dinheiro)
+        if (PermiteTroco)
         {
             pagamento.ValorRecebido = ValorRecebido > 0 ? ValorRecebido : valorEfetivo;
         }
@@ -118,7 +170,8 @@ public partial class PagamentoViewModel : ObservableObject
         ValorPagamento = ValorRestante > 0 ? ValorRestante : 0;
         ValorRecebido = 0;
 
-        MensagemStatus = $"{FormaSelecionada} - {valorEfetivo:C2} adicionado";
+        var nomeForma = FormaSelecionadaSessao?.Nome ?? FormaSelecionada.ToString();
+        MensagemStatus = $"{nomeForma} - {valorEfetivo:C2} adicionado";
     }
 
     [RelayCommand]
@@ -156,5 +209,6 @@ public partial class PagamentoViewModel : ObservableObject
         OnPropertyChanged(nameof(ValorRestante));
         OnPropertyChanged(nameof(Troco));
         OnPropertyChanged(nameof(PodeConfirmar));
+        OnPropertyChanged(nameof(PermiteTroco));
     }
 }

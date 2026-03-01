@@ -10,10 +10,12 @@ namespace PDV.App.ViewModels;
 public partial class ComprovanteViewModel : ObservableObject
 {
     private readonly IImpressoraService _impressoraService;
+    private readonly ISessaoService _sessao;
 
-    public ComprovanteViewModel(IImpressoraService impressoraService)
+    public ComprovanteViewModel(IImpressoraService impressoraService, ISessaoService sessao)
     {
         _impressoraService = impressoraService;
+        _sessao = sessao;
     }
 
     // Callback de navegacao
@@ -43,14 +45,34 @@ public partial class ComprovanteViewModel : ObservableObject
 
     public bool EmContingencia => Venda.Status == StatusVenda.Contingencia;
 
-    public string NomeFormaPagamento(FormaPagamento forma) => forma switch
+    public string NomeFormaPagamento(FormaPagamento forma)
     {
-        FormaPagamento.Dinheiro => "Dinheiro",
-        FormaPagamento.CartaoCredito => "Cartao Credito",
-        FormaPagamento.CartaoDebito => "Cartao Debito",
-        FormaPagamento.PIX => "PIX",
-        _ => "Outros"
-    };
+        // Tenta buscar o nome da forma na sessao
+        var formasSessao = _sessao.FormasPagamento;
+        if (formasSessao.Count > 0)
+        {
+            // Mapeia enum para busca aproximada
+            var nome = forma switch
+            {
+                FormaPagamento.Dinheiro => "dinheiro",
+                FormaPagamento.CartaoCredito => "credito",
+                FormaPagamento.CartaoDebito => "debito",
+                FormaPagamento.PIX => "pix",
+                _ => ""
+            };
+            var match = formasSessao.FirstOrDefault(f => f.Nome.ToLower().Contains(nome));
+            if (match != null) return match.Nome;
+        }
+
+        return forma switch
+        {
+            FormaPagamento.Dinheiro => "Dinheiro",
+            FormaPagamento.CartaoCredito => "Cartao Credito",
+            FormaPagamento.CartaoDebito => "Cartao Debito",
+            FormaPagamento.PIX => "PIX",
+            _ => "Outros"
+        };
+    }
 
     partial void OnVendaChanged(Venda value)
     {

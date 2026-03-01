@@ -16,17 +16,24 @@ public partial class ConfiguracoesViewModel : ObservableObject
     private readonly ImpressoraConfig _impressoraConfig;
     private readonly ConfiguracoesService _configService;
     private readonly IImpressoraService _impressoraService;
+    private readonly ISessaoService _sessao;
 
     public ConfiguracoesViewModel(
         ImpressoraConfig impressoraConfig,
         ConfiguracoesService configService,
-        IImpressoraService impressoraService)
+        IImpressoraService impressoraService,
+        ISessaoService sessao)
     {
         _impressoraConfig = impressoraConfig;
         _configService = configService;
         _impressoraService = impressoraService;
+        _sessao = sessao;
 
         _temaAtual = ThemeManager.CurrentTheme;
+
+        // Carregar URL da API
+        var config = _configService.Carregar();
+        _apiUrl = config.ApiUrl;
 
         // Carregar valores atuais (converter tipo interno -> UI)
         _tipoConexao = _impressoraConfig.TipoConexao switch
@@ -49,11 +56,16 @@ public partial class ConfiguracoesViewModel : ObservableObject
     // Callback de navegacao
     public Action? Voltar { get; set; }
 
-    // Infos da empresa (read-only)
-    public string NomeEmpresa => _impressoraConfig.NomeEmpresa;
-    public string CnpjEmpresa => _impressoraConfig.CnpjEmpresa;
+    // Infos da empresa (da sessao)
+    public string NomeEmpresa => _sessao.Empresa?.Nome ?? _impressoraConfig.NomeEmpresa;
+    public string CnpjEmpresa => _sessao.Empresa?.Cnpj ?? _impressoraConfig.CnpjEmpresa;
     public string EnderecoEmpresa => _impressoraConfig.EnderecoEmpresa;
     public string VersaoApp => Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
+
+    // ====== API ======
+
+    [ObservableProperty]
+    private string _apiUrl = string.Empty;
 
     // ====== TEMA ======
 
@@ -220,6 +232,7 @@ public partial class ConfiguracoesViewModel : ObservableObject
         config.PortaRede = PortaRede;
         config.ColunasMaximas = ColunasMaximas;
         config.NomeSpooler = ImpressoraSelecionada;
+        config.ApiUrl = ApiUrl;
         _configService.Salvar(config);
 
         ResultadoTeste = "Salvo!";
