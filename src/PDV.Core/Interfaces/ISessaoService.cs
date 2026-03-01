@@ -14,6 +14,9 @@ public interface ISessaoService
     FilialSessao? Filial { get; }
     List<FilialSessao> Filiais { get; }
 
+    // Caixa
+    int? CaixaCodigo { get; }
+
     // Configuracoes carregadas da API
     ConfiguracaoPdv? Configuracao { get; }
     List<FormaPagamentoSessao> FormasPagamento { get; }
@@ -26,5 +29,6 @@ public interface ISessaoService
     void DefinirConfiguracao(ConfiguracaoPdv config);
     void DefinirFormasPagamento(List<FormaPagamentoSessao> formas);
     void DefinirConfigTerminal(ConfigTerminal config);
+    void DefinirCaixaCodigo(int? codigo);
     void Limpar();
 }

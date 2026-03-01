@@ -82,10 +82,12 @@ public partial class MainViewModel : ObservableObject
         try
         {
             var apiClient = _services.GetRequiredService<IApiClient>();
+            var sessao = _services.GetRequiredService<ISessaoService>();
             var status = await apiClient.ObterStatusCaixa();
 
             if (status.Sucesso && status.CaixaAberto)
             {
+                sessao.DefinirCaixaCodigo(status.CaixaCodigo);
                 NavegarParaPDV();
                 return;
             }
@@ -184,6 +186,7 @@ public partial class MainViewModel : ObservableObject
         var vm = _services.GetRequiredService<ConsultaVendasViewModel>();
         vm.Cancelado = () => TelaAtual = _pdvVmAtual;
         TelaAtual = vm;
+        _ = vm.CarregarInicial();
     }
 
     private void NavegarParaConfiguracoes()

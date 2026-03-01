@@ -531,6 +531,49 @@
     </Style>
 
     <!-- ===================================================== -->
+    <!-- DATEPICKER                                            -->
+    <!-- ===================================================== -->
+
+    <Style TargetType="DatePicker">
+        <Setter Property="Background" Value="{DynamicResource SurfaceLightBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+    </Style>
+
+    <Style TargetType="DatePickerTextBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="2"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DatePickerTextBox">
+                    <Grid>
+                        <TextBox x:Name="PART_TextBox"
+                                 Text="{Binding Path=SelectedDate, RelativeSource={RelativeSource AncestorType=DatePicker}, StringFormat=dd/MM/yyyy}"
+                                 Background="Transparent"
+                                 Foreground="{DynamicResource TextBrush}"
+                                 CaretBrush="{DynamicResource TextBrush}"
+                                 BorderThickness="0"
+                                 Padding="0"
+                                 IsReadOnly="True"
+                                 Focusable="False"/>
+                        <ContentControl x:Name="PART_Watermark"
+                                        Opacity="0.5"
+                                        Focusable="False"
+                                        IsHitTestVisible="False"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===================================================== -->
     <!-- CARD BORDER (container padrao)                         -->
     <!-- ===================================================== -->
 

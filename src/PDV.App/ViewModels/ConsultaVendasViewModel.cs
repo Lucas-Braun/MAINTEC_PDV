@@ -33,6 +33,11 @@ public partial class ConsultaVendasViewModel : ObservableObject
     // Callbacks
     public Action? Cancelado { get; set; }
 
+    public async Task CarregarInicial()
+    {
+        await Pesquisar();
+    }
+
     // Filtros
     [ObservableProperty]
     private DateTime _dataInicio;

@@ -55,7 +55,7 @@
                     <TextBlock Foreground="{DynamicResource TextSecondaryBrush}"
                                VerticalAlignment="Center" Margin="0,0,20,0">
                         <Run Text="Caixa: " />
-                        <Run Text="001" FontWeight="Bold"
+                        <Run Text="{Binding NumeroCaixa, Mode=OneWay}" FontWeight="Bold"
                              Foreground="{DynamicResource TextBrush}" />
                     </TextBlock>
                     <TextBlock Foreground="{DynamicResource TextSecondaryBrush}"
@@ -482,32 +482,112 @@
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal"
                             VerticalAlignment="Center" Margin="20,0">
-                    <Ellipse Style="{DynamicResource StatusDotOnline}"
-                             Margin="0,0,5,0" />
-                    <TextBlock Text="NFC-e: Online"
+                    <Ellipse Width="8" Height="8" Margin="0,0,5,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{DynamicResource NegativeBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding NfceOnline}" Value="True">
+                                        <Setter Property="Fill" Value="{DynamicResource PositiveBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Text="{Binding StatusNfceTexto}"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                FontSize="12" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal"
                             VerticalAlignment="Center" Margin="20,0">
-                    <Ellipse Style="{DynamicResource StatusDotOnline}"
-                             Margin="0,0,5,0" />
-                    <TextBlock Text="TEF: Conectado"
+                    <Ellipse Width="8" Height="8" Margin="0,0,5,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{DynamicResource NegativeBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding TefConectado}" Value="True">
+                                        <Setter Property="Fill" Value="{DynamicResource PositiveBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Text="{Binding StatusTefTexto}"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                FontSize="12" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="3" Orientation="Horizontal"
                             VerticalAlignment="Center">
-                    <Ellipse Style="{DynamicResource StatusDotOnline}"
-                             Margin="0,0,5,0" />
-                    <TextBlock Text="ERP: Sincronizado"
+                    <Ellipse Width="8" Height="8" Margin="0,0,5,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{DynamicResource NegativeBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ApiConectada}" Value="True">
+                                        <Setter Property="Fill" Value="{DynamicResource PositiveBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Text="{Binding StatusApiTexto}"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                FontSize="12" />
                 </StackPanel>
             </Grid>
         </Border>
+
+        <!-- ============================================= -->
+        <!-- OVERLAY DE CONFIRMACAO CANCELAMENTO           -->
+        <!-- ============================================= -->
+        <Grid Grid.RowSpan="3" Panel.ZIndex="80">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ConfirmandoCancelamento}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Border Background="#88000000"/>
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="16"
+                    Padding="40,30"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Effect="{DynamicResource CardShadow}">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="CANCELAR VENDA?"
+                               FontSize="22" FontWeight="Bold"
+                               Foreground="{DynamicResource NegativeBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,8"/>
+                    <TextBlock Text="Todos os itens serao removidos."
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,24"/>
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center">
+                        <Button Content="SIM, CANCELAR (F9)"
+                                Command="{Binding CancelarVendaCommand}"
+                                Style="{DynamicResource BotaoNegative}"
+                                FontSize="14" Height="44"
+                                Padding="24,0"
+                                Margin="0,0,12,0"/>
+                        <Button Content="NAO, VOLTAR (ESC)"
+                                Command="{Binding DesistirCancelamentoCommand}"
+                                Style="{DynamicResource BotaoNeutral}"
+                                FontSize="14" Height="44"
+                                Padding="24,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
 
         <!-- ============================================= -->
         <!-- OVERLAY DE PROCESSAMENTO                      -->

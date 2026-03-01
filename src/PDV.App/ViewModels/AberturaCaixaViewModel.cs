@@ -99,6 +99,7 @@ public partial class AberturaCaixaViewModel : ObservableObject
                 return;
             }
 
+            _sessao.DefinirCaixaCodigo(resultado.CaixaCodigo);
             CaixaAberto?.Invoke();
         }
         catch (Exception ex)

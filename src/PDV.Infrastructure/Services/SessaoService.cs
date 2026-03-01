@@ -13,6 +13,8 @@ public class SessaoService : ISessaoService
     public FilialSessao? Filial { get; private set; }
     public List<FilialSessao> Filiais { get; private set; } = new();
 
+    public int? CaixaCodigo { get; private set; }
+
     public ConfiguracaoPdv? Configuracao { get; private set; }
     public List<FormaPagamentoSessao> FormasPagamento { get; private set; } = new();
     public ConfigTerminal? ConfigTerminal { get; private set; }
@@ -47,6 +49,11 @@ public class SessaoService : ISessaoService
         ConfigTerminal = config;
     }
 
+    public void DefinirCaixaCodigo(int? codigo)
+    {
+        CaixaCodigo = codigo;
+    }
+
     public void Limpar()
     {
         Token = null;
@@ -57,5 +64,6 @@ public class SessaoService : ISessaoService
         Configuracao = null;
         FormasPagamento = new();
         ConfigTerminal = null;
+        CaixaCodigo = null;
     }
 }

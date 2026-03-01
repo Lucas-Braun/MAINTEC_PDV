@@ -32,10 +32,16 @@ public partial class PDVViewModel : ObservableObject
         VendaAtual = new Venda();
         Itens = new ObservableCollection<ItemVenda>();
 
+        // Numero do caixa da sessao
+        NumeroCaixa = _sessao.CaixaCodigo?.ToString("D3") ?? "---";
+
         // Relogio ao vivo - atualiza a cada segundo
         var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         timer.Tick += (_, _) => DataHoraAtual = DateTime.Now.ToString("dd/MM/yyyy  HH:mm:ss");
         timer.Start();
+
+        // Verifica status de conexoes ao iniciar
+        _ = VerificarConexoes();
     }
 
     // =========================================
@@ -103,6 +109,33 @@ public partial class PDVViewModel : ObservableObject
     private string _cpfCliente = string.Empty;
 
     public bool ClienteDefinido => !string.IsNullOrEmpty(NomeCliente);
+
+    // Numero do caixa (da sessao)
+    [ObservableProperty]
+    private string _numeroCaixa = "---";
+
+    // Status de conexoes
+    [ObservableProperty]
+    private bool _apiConectada;
+
+    [ObservableProperty]
+    private string _statusApiTexto = "ERP: Verificando...";
+
+    [ObservableProperty]
+    private bool _tefConectado;
+
+    [ObservableProperty]
+    private string _statusTefTexto = "TEF: Verificando...";
+
+    [ObservableProperty]
+    private bool _nfceOnline;
+
+    [ObservableProperty]
+    private string _statusNfceTexto = "NFC-e: Verificando...";
+
+    // Confirmacao de cancelamento
+    [ObservableProperty]
+    private bool _confirmandoCancelamento;
 
     // Totais exibidos na tela
     public decimal SubTotal => Itens.Sum(i => i.ValorTotal);
@@ -342,8 +375,23 @@ public partial class PDVViewModel : ObservableObject
     {
         if (!VendaEmAndamento) return;
 
+        if (!ConfirmandoCancelamento)
+        {
+            ConfirmandoCancelamento = true;
+            MensagemStatus = "Pressione F9 novamente para confirmar o cancelamento";
+            return;
+        }
+
+        ConfirmandoCancelamento = false;
         NovaVenda();
         MensagemStatus = "Venda cancelada";
+    }
+
+    [RelayCommand]
+    private void DesistirCancelamento()
+    {
+        ConfirmandoCancelamento = false;
+        MensagemStatus = "Cancelamento desfeito";
     }
 
     [RelayCommand]
@@ -424,12 +472,37 @@ public partial class PDVViewModel : ObservableObject
         VendaAtual = new Venda();
         Itens.Clear();
         VendaEmAndamento = false;
+        ConfirmandoCancelamento = false;
         CodigoBarrasInput = string.Empty;
         QuantidadeInput = 1;
         NomeCliente = string.Empty;
         CpfCliente = string.Empty;
         OnPropertyChanged(nameof(ClienteDefinido));
         AtualizarTotais();
+    }
+
+    private async Task VerificarConexoes()
+    {
+        // API / ERP
+        try
+        {
+            var ok = await _apiClient.Ping();
+            ApiConectada = ok;
+            StatusApiTexto = ok ? "ERP: Sincronizado" : "ERP: Offline";
+        }
+        catch
+        {
+            ApiConectada = false;
+            StatusApiTexto = "ERP: Offline";
+        }
+
+        // NFC-e (depende da API estar online + config)
+        NfceOnline = ApiConectada && (_sessao.Configuracao?.EmitirNfceAuto == true);
+        StatusNfceTexto = NfceOnline ? "NFC-e: Online" : "NFC-e: Offline";
+
+        // TEF (stub por enquanto = sempre conectado)
+        TefConectado = true;
+        StatusTefTexto = "TEF: Conectado";
     }
 
     public void AtualizarAposEdicaoQuantidade()
