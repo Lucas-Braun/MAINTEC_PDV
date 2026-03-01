@@ -1,6 +1,6 @@
 # MEINTEC PDV — Estrutura do Projeto
 
-## Status: API-First — .NET 8.0, 9 telas, 2 temas, ESCPOS_NET, Instalador, Icone + Splash
+## Status: API-First — .NET 8.0, 11 telas, 2 temas, ESCPOS_NET, Polly retry, PdvLogger, Instalador, Icone + Splash
 
 **Repositorio:** https://github.com/Lucas-Braun/MAINTEC_PDV.git
 
@@ -10,14 +10,16 @@
 ViewModel → Service → IApiClient (API real) + ISessaoService (estado em memoria)
                          ↓
                    ErpApiClient → POST/GET /api/v1/pdv/*
-                         ↓
+                         ↓                (Polly retry: 3x backoff exponencial)
                    ERP MEINTEC (servidor)
 ```
 
 - **ISessaoService**: singleton in-memory (token, usuario, empresa, filial, config, formas pagamento, terminal)
-- **IApiClient**: 17 metodos retornando objetos de dominio (nao DTOs)
+- **IApiClient**: 20 metodos retornando objetos de dominio (nao DTOs)
 - **SQLite/PdvDbContext**: permanece como cache opcional, fora do caminho critico
 - **NFC-e/Estoque/Precos**: servidor cuida de tudo via `POST /venda/finalizar-direto`
+- **PdvLogger**: log de operacoes em arquivo com rotacao diaria
+- **Polly**: retry automatico (3 tentativas, backoff exponencial 500ms→1s→2s)
 
 ```
 PDV.sln
@@ -29,8 +31,8 @@ README.md                              Documentacao da API MEINTEC (39 endpoints
 │   ├── PDV.App/                        # Projeto WPF Principal (UI)
 │   │   ├── App.xaml / App.xaml.cs      DI completo + ISessaoService singleton +
 │   │   │                                 IApiClient via HttpClientFactory +
-│   │   │                                 ApiKeepAliveService + SplashScreen +
-│   │   │                                 CodePagesEncodingProvider + ThemeManager
+│   │   │                                 ApiKeepAliveService + PdvLogger +
+│   │   │                                 SplashScreen + ThemeManager
 │   │   ├── Themes/
 │   │   │   ├── FioriTheme.xaml         Tema ativo (merge Colors + Controls)
 │   │   │   ├── ThemeManager.cs         Troca de tema em runtime (ApplyTheme/CurrentTheme)
@@ -41,39 +43,70 @@ README.md                              Documentacao da API MEINTEC (39 endpoints
 │   │   │       ├── Colors.EveningHorizon.xaml  Tema Dark (SAP Fiori Horizon Dark)
 │   │   │       └── Controls.xaml       BotaoPDV, TextBoxPDV, DataGridPDV,
 │   │   │                                  RadioPDV, CardPDV, BotaoFuncao,
-│   │   │                                  ScrollBar, ToolTip, ProgressBar (todos temados)
+│   │   │                                  StatusDotOnline, ScrollBar, ToolTip,
+│   │   │                                  ProgressBar (todos temados)
 │   │   ├── Assets/
 │   │   │   ├── app.ico                Icone multi-res (16/32/48/256) — "M" azul #4BA3F5
 │   │   │   └── splash.png             Splash screen 600x340 — fundo #111920, logo MEINTEC
 │   │   ├── Controls/
-│   │   │   └── FadeContentControl.cs   Transicao animada entre telas (fade 250ms)
+│   │   │   └── FadeContentControl.cs   Transicao slide-from-right + fade (220ms, QuadraticEase)
 │   │   ├── Views/
-│   │   │   ├── MainWindow.xaml/.cs     Shell fullscreen + DataTemplates (9 telas)
+│   │   │   ├── MainWindow.xaml/.cs     Shell fullscreen + DataTemplates (11 telas) +
+│   │   │   │                              botao fechar (hover vermelho)
 │   │   │   ├── LoginView.xaml/.cs      Layout split: branding MEINTEC + formulario
-│   │   │   │                              (sem indicador ERP, login obrigatorio via API)
-│   │   │   ├── PDVView.xaml/.cs        Tela principal + F-keys + empty state +
-│   │   │   │                              loading overlay + edicao QTD inline
+│   │   │   ├── PDVView.xaml/.cs        Tela principal completa:
+│   │   │   │                              F-keys (F1-F12), icones Segoe MDL2 Assets,
+│   │   │   │                              grupos (VENDA/CONSULTAS/CAIXA/SISTEMA),
+│   │   │   │                              badge itens, foto produto, auto-scroll,
+│   │   │   │                              status bar (ERP/NFC-e/TEF com ping 60s),
+│   │   │   │                              produtos recentes (6 chips), teclado numerico,
+│   │   │   │                              overlays: ajuda, leitura X, desconto F8,
+│   │   │   │                              cancelamento, processamento, toast, busca avancada,
+│   │   │   │                              edicao QTD inline, empty state
 │   │   │   ├── AberturaCaixaView.xaml/.cs    ComboBox de terminais (ou terminal fixo) + valor
-│   │   │   ├── PagamentoView.xaml/.cs        ListBox dinamico de formas (da API via sessao),
-│   │   │   │                                    troco/valor recebido condicionais por PermiteTroco
+│   │   │   ├── PagamentoView.xaml/.cs        Formas dinamicas da API, troco/valor recebido,
+│   │   │   │                                    atalhos rapidos 1-clique (Dinheiro/PIX/Debito)
 │   │   │   ├── ConsultaProdutoView.xaml/.cs  Busca + DataGrid + estoque baixo em vermelho
-│   │   │   ├── SangriaSuprimentoView.xaml/.cs Valor + observacao + botoes rapidos
-│   │   │   ├── FechamentoCaixaView.xaml/.cs  Resumo financeiro da API + fechar
+│   │   │   ├── ConsultaClienteView.xaml/.cs  Busca cliente por nome/CPF
+│   │   │   ├── ConsultaVendasView.xaml/.cs   Filtros (data/status/NF), grid vendas,
+│   │   │   │                                    detalhe com itens, reimprimir, estorno
+│   │   │   ├── SangriaSuprimentoView.xaml/.cs Valor + observacao + botoes rapidos +
+│   │   │   │                                    saldo atual + historico movimentacoes
+│   │   │   ├── FechamentoCaixaView.xaml/.cs  Resumo financeiro da API + fechar +
+│   │   │   │                                    impressao relatorio na termica
 │   │   │   ├── ConfiguracoesView.xaml/.cs    Tema + impressora + URL API + info sistema
 │   │   │   └── ComprovanteView.xaml/.cs     Exibicao de comprovante de venda
 │   │   ├── ViewModels/
 │   │   │   ├── MainViewModel.cs        Navegacao central + callbacks + ApiKeepAliveService
-│   │   │   │                              start/stop + checa caixa via IApiClient
+│   │   │   │                              start/stop + PdvLogger (login/logout/sangria/suprimento)
 │   │   │   ├── LoginViewModel.cs       Auth via IOperadorService (que chama API + carrega
 │   │   │   │                              config/formas/terminal em paralelo)
-│   │   │   ├── PDVViewModel.cs         Busca produto via API, FinalizarVendaDireta com
-│   │   │   │                              idempotency key, imprime local
+│   │   │   ├── PDVViewModel.cs         Tela principal completa:
+│   │   │   │                              - Busca produto (codigo/nome/fallback)
+│   │   │   │                              - FinalizarVendaDireta com idempotency key
+│   │   │   │                              - Toast notifications (4s auto-dismiss)
+│   │   │   │                              - Help overlay (atalhos)
+│   │   │   │                              - Leitura X (resumo financeiro + imprimir)
+│   │   │   │                              - Desconto F8 (item/geral)
+│   │   │   │                              - CPF na nota
+│   │   │   │                              - Produtos recentes (max 6)
+│   │   │   │                              - Teclado numerico virtual
+│   │   │   │                              - Busca avancada (Ctrl+B overlay com grid)
+│   │   │   │                              - Indicador conexao (ping 60s)
+│   │   │   │                              - Auto-scroll, +/- qtd, F1 repetir
+│   │   │   │                              - Abertura gaveta (dinheiro)
+│   │   │   │                              - PdvLogger (venda/cancelamento/erros)
 │   │   │   ├── AberturaCaixaViewModel.cs     Terminais de ISessaoService + AbrirCaixa(val, ter)
 │   │   │   ├── PagamentoViewModel.cs         Formas dinamicas da sessao, PermiteTroco,
-│   │   │   │                                    FcbInCodigo no Pagamento
+│   │   │   │                                    FcbInCodigo, PagamentoRapido (1-clique)
 │   │   │   ├── ConsultaProdutoViewModel.cs   IProdutoService.Pesquisar (API)
-│   │   │   ├── SangriaSuprimentoViewModel.cs Sangria/Suprimento via ICaixaService (API)
-│   │   │   ├── FechamentoCaixaViewModel.cs   Resumo via ObterResumoCaixa (API) + FecharCaixa
+│   │   │   ├── ConsultaClienteViewModel.cs   BuscarClientes, BuscarClientePorDocumento
+│   │   │   ├── ConsultaVendasViewModel.cs    ListarVendas, ObterVendaDetalhe, EstornarVenda,
+│   │   │   │                                    Reimprimir cupom, paginacao (carregar mais)
+│   │   │   ├── SangriaSuprimentoViewModel.cs Sangria/Suprimento via ICaixaService +
+│   │   │   │                                    SaldoCaixa + historico movimentos
+│   │   │   ├── FechamentoCaixaViewModel.cs   Resumo via ObterResumoCaixa + FecharCaixa +
+│   │   │   │                                    impressao relatorio na termica
 │   │   │   ├── ConfiguracoesViewModel.cs     Tema + impressora + ApiUrl + info da sessao
 │   │   │   └── ComprovanteViewModel.cs      NomeFormaPagamento busca na sessao
 │   │   └── Converters/
@@ -93,20 +126,27 @@ README.md                              Documentacao da API MEINTEC (39 endpoints
 │   │   │   ├── Pagamento.cs            FormaPagamento enum + FcbInCodigo int,
 │   │   │   │                             Troco computado, suporte TEF/PIX
 │   │   │   ├── Caixa.cs                SaldoEsperado/Diferenca computados
-│   │   │   ├── MovimentoCaixa.cs
+│   │   │   ├── MovimentoCaixa.cs       Id, Tipo, Valor, Observacao, DataHora
+│   │   │   ├── VendaConsulta.cs        VendaResumo, VendaDetalhe, ItemVendaDetalhe
+│   │   │   ├── Cliente.cs              Nome, CpfCnpj, Telefone, Email
 │   │   │   └── Operador.cs             Perfis: caixa, supervisor, admin
 │   │   ├── Interfaces/
-│   │   │   ├── IApiClient.cs           17 metodos: Login, RefreshToken, Ping,
+│   │   │   ├── IApiClient.cs           20 metodos: Login, RefreshToken, Ping,
 │   │   │   │                             ObterConfiguracao, ObterFormasPagamento,
 │   │   │   │                             ObterStatusCaixa, ObterConfigTerminal,
 │   │   │   │                             AbrirCaixa, FecharCaixa, RegistrarSangria,
 │   │   │   │                             RegistrarSuprimento, ObterResumoCaixa,
+│   │   │   │                             ObterMovimentosCaixa,
 │   │   │   │                             BuscarProdutoPorCodigo, PesquisarProdutos,
-│   │   │   │                             FinalizarVendaDireta
+│   │   │   │                             FinalizarVendaDireta,
+│   │   │   │                             ListarVendas, ObterVendaDetalhe, EstornarVenda,
+│   │   │   │                             BuscarClientes, BuscarClientePorDocumento,
+│   │   │   │                             CadastrarCliente
 │   │   │   │                             + Result types (ResultadoLogin, ResultadoCaixaStatus,
 │   │   │   │                             ResultadoAbrirCaixa, ResultadoFecharCaixa,
 │   │   │   │                             ResultadoOperacao, ResultadoResumoCaixa,
-│   │   │   │                             ResultadoVenda, ItemVendaApi, ParcelaApi)
+│   │   │   │                             ResultadoVenda, ResultadoCadastroCliente,
+│   │   │   │                             ItemVendaApi, ParcelaApi)
 │   │   │   ├── ISessaoService.cs       Token, Autenticado, Usuario, Empresa, Filial,
 │   │   │   │                             Filiais, Configuracao, FormasPagamento,
 │   │   │   │                             ConfigTerminal + DefinirSessao/AtualizarToken/Limpar
@@ -119,7 +159,8 @@ README.md                              Documentacao da API MEINTEC (39 endpoints
 │   │   │   ├── IOperadorService.cs     Autenticar (via API), Logout (limpa sessao)
 │   │   │   ├── INFCeService.cs         EmitirNFCe, CancelarNFCe (stub — servidor cuida)
 │   │   │   ├── ITEFService.cs          ProcessarPagamento (TEF local futuro)
-│   │   │   └── IImpressoraService.cs   ImprimirCupom, EnviarRaw, VerificarConexao
+│   │   │   └── IImpressoraService.cs   ImprimirCupom, ImprimirFechamentoCaixa,
+│   │   │                                 AbrirGaveta, EnviarRaw, VerificarConexao
 │   │   └── Enums/
 │   │       ├── StatusVenda.cs          EmAberto, Finalizada, Cancelada, Contingencia
 │   │       ├── FormaPagamento.cs       Dinheiro(1), Credito(3), Debito(4), PIX(17),
@@ -130,7 +171,8 @@ README.md                              Documentacao da API MEINTEC (39 endpoints
 │   │   ├── Api/
 │   │   │   ├── ErpApiClient.cs         Implementa IApiClient — chamadas HTTP a
 │   │   │   │                             /api/v1/pdv/*, token via ISessaoService,
-│   │   │   │                             mapeamento DTO→domain
+│   │   │   │                             mapeamento DTO→domain,
+│   │   │   │                             Polly retry (3x backoff exponencial)
 │   │   │   ├── ErpApiConfig.cs         BaseUrl, ApiVersion, ApiPrefix="/api/v1/pdv",
 │   │   │   │                             TimeoutSeconds=30, PingIntervalMinutes=10,
 │   │   │   │                             TokenRefreshHours=12
@@ -144,9 +186,15 @@ README.md                              Documentacao da API MEINTEC (39 endpoints
 │   │   │       │                         ProdutoApiDTO (pro_in_codigo, etc.)
 │   │   │       ├── VendaDTO.cs         FinalizarVendaRequest, ItemVendaApiDTO, ParcelaApiDTO,
 │   │   │       │                         FinalizarVendaResponse, ResultadoVendaDTO
+│   │   │       ├── VendaConsultaDTO.cs ListarVendasResponse, VendaResumoDTO,
+│   │   │       │                         DetalheVendaResponse, VendaDetalheDTO,
+│   │   │       │                         NfceInfoDTO, ItemVendaDetalheDTO
 │   │   │       ├── CaixaDTO.cs         CaixaStatusResponse, AbrirCaixaRequest/Response,
 │   │   │       │                         FecharCaixaRequest/Response, SangriaSuprimentoReq/Resp,
-│   │   │       │                         ResumoResponse, ConfigTerminalResponse, TerminalDTO
+│   │   │       │                         ResumoResponse, MovimentosCaixaResponse,
+│   │   │       │                         MovimentoCaixaDTO, ConfigTerminalResponse, TerminalDTO
+│   │   │       ├── ClienteDTO.cs       ClienteBuscaResponse, ClienteApiDTO,
+│   │   │       │                         CadastrarClienteResponse
 │   │   │       └── ConfigDTO.cs        ConfiguracaoResponse, ConfiguracaoPdvDTO,
 │   │   │                                 FormasPagamentoResponse, FormaPagamentoApiDTO,
 │   │   │                                 PingResponse
@@ -156,6 +204,7 @@ README.md                              Documentacao da API MEINTEC (39 endpoints
 │   │   │   └── TEFServiceStub.cs       Stub (TEF local futuro)
 │   │   ├── Impressora/
 │   │   │   ├── ImpressoraService.cs    Serial/Rede/Spooler + RawPrinterHelper (P/Invoke)
+│   │   │   │                             ImprimirCupom, ImprimirFechamentoCaixa, AbrirGaveta
 │   │   │   ├── CupomBuilder.cs         ESCPOS_NET emitter (EPSON + ByteSplicer)
 │   │   │   └── ImpressoraConfig.cs     NomeEmpresa, CnpjEmpresa, EnderecoEmpresa
 │   │   ├── Services/
@@ -165,8 +214,16 @@ README.md                              Documentacao da API MEINTEC (39 endpoints
 │   │   │   ├── CaixaService.cs         Wrapper fino de IApiClient (todas operacoes de caixa)
 │   │   │   ├── ProdutoService.cs       Delega tudo para IApiClient (busca/pesquisa)
 │   │   │   ├── VendaService.cs         IVendaService (mantido para compat, acessa SQLite)
-│   │   │   └── ConfiguracoesService.cs ConfiguracoesApp com ApiUrl, persistido em JSON
-│   │   │                                 (%LOCALAPPDATA%\PDV\configuracoes.json)
+│   │   │   ├── ConfiguracoesService.cs ConfiguracoesApp com ApiUrl, persistido em JSON
+│   │   │   │                             (%LOCALAPPDATA%\PDV\configuracoes.json)
+│   │   │   └── PdvLogger.cs           Log de operacoes em arquivo:
+│   │   │                                 - Rotacao diaria (pdv_YYYYMMDD.log)
+│   │   │                                 - ConcurrentQueue + flush a cada 2s
+│   │   │                                 - Retencao 30 dias (limpeza automatica)
+│   │   │                                 - Niveis: INFO, WARN, ERRO, OPER
+│   │   │                                 - Registra: login, logout, vendas, cancelamentos,
+│   │   │                                   sangrias, suprimentos, erros
+│   │   │                                 - Arquivo: %LOCALAPPDATA%\PDV\logs\
 │   │   └── LocalDb/
 │   │       ├── PdvDbContext.cs          7 tabelas, EF Core SQLite (cache opcional)
 │   │       └── SyncManager.cs          Pendente (fila offline → ERP)
@@ -180,15 +237,22 @@ README.md                              Documentacao da API MEINTEC (39 endpoints
 
 ```
 Login → AberturaCaixa (se nao tem caixa aberto) → PDV
-                                                    ├─ F2  → Pagamento → Comprovante → PDV
-                                                    ├─ F4  → ConsultaProduto → PDV (insere produto)
-                                                    ├─ F5  → SangriaSuprimento(Sangria) → PDV
-                                                    ├─ F6  → SangriaSuprimento(Suprimento) → PDV
-                                                    ├─ F9  → Cancela venda atual
-                                                    ├─ F10 → Configuracoes → PDV (ESC)
-                                                    ├─ Del → Remove item selecionado
-                                                    ├─ F12 → FechamentoCaixa → Login
-                                                    └─ ESC → Fechar app (so em Login/PDV)
+                                                    ├─ F1    → Repetir ultimo item
+                                                    ├─ F2    → Pagamento → Comprovante → PDV
+                                                    ├─ F3    → ConsultaCliente → PDV
+                                                    ├─ F4    → ConsultaProduto → PDV (insere produto)
+                                                    ├─ F5    → SangriaSuprimento(Sangria) → PDV
+                                                    ├─ F6    → SangriaSuprimento(Suprimento) → PDV
+                                                    ├─ F7    → ConsultaVendas (filtros/detalhe/estorno) → PDV
+                                                    ├─ F8    → Desconto overlay (item/geral)
+                                                    ├─ F9    → Cancela venda (confirmacao dupla)
+                                                    ├─ F10   → Configuracoes → PDV (ESC)
+                                                    ├─ F11   → Logout → Login
+                                                    ├─ F12   → FechamentoCaixa → Login
+                                                    ├─ Del   → Remove item selecionado
+                                                    ├─ +/-   → Incrementar/decrementar QTD
+                                                    ├─ Ctrl+B → Busca avancada (overlay com grid)
+                                                    └─ ESC   → Fechar app (so em Login/PDV)
 ```
 
 Sub-telas usam ESC para voltar ao PDV (sem fechar o app).
@@ -203,12 +267,14 @@ O `MainWindow.xaml` tem DataTemplates que mapeiam cada ViewModel para sua View:
 [ObservableProperty]
 private ObservableObject? _telaAtual;
 
-// MainWindow.xaml — 9 DataTemplates:
+// MainWindow.xaml — 11 DataTemplates:
 <DataTemplate DataType="{x:Type vm:LoginViewModel}">              → LoginView
 <DataTemplate DataType="{x:Type vm:PDVViewModel}">                → PDVView
 <DataTemplate DataType="{x:Type vm:AberturaCaixaViewModel}">      → AberturaCaixaView
 <DataTemplate DataType="{x:Type vm:PagamentoViewModel}">          → PagamentoView
 <DataTemplate DataType="{x:Type vm:ConsultaProdutoViewModel}">    → ConsultaProdutoView
+<DataTemplate DataType="{x:Type vm:ConsultaClienteViewModel}">    → ConsultaClienteView
+<DataTemplate DataType="{x:Type vm:ConsultaVendasViewModel}">     → ConsultaVendasView
 <DataTemplate DataType="{x:Type vm:SangriaSuprimentoViewModel}">  → SangriaSuprimentoView
 <DataTemplate DataType="{x:Type vm:FechamentoCaixaViewModel}">    → FechamentoCaixaView
 <DataTemplate DataType="{x:Type vm:ConfiguracoesViewModel}">      → ConfiguracoesView
@@ -235,10 +301,13 @@ O PDVViewModel expoe callbacks para navegacao sem depender do MainViewModel:
 ```csharp
 public Action<decimal>? SolicitarPagamento { get; set; }  // F2 → PagamentoView
 public Action? SolicitarConsulta { get; set; }             // F4 → ConsultaProdutoView
+public Action? SolicitarConsultaCliente { get; set; }      // F3 → ConsultaClienteView
 public Action? SolicitarSangria { get; set; }              // F5 → SangriaSuprimentoView
 public Action? SolicitarSuprimento { get; set; }           // F6 → SangriaSuprimentoView
+public Action? SolicitarConsultaVendas { get; set; }       // F7 → ConsultaVendasView
 public Action? SolicitarConfiguracoes { get; set; }        // F10 → ConfiguracoesView
 public Action? SolicitarFechamento { get; set; }           // F12 → FechamentoCaixaView
+public Action? SolicitarLogout { get; set; }               // F11 → Login
 public Action<Venda>? VendaFinalizada { get; set; }        // → ComprovanteView
 ```
 
@@ -247,7 +316,7 @@ public Action<Venda>? VendaFinalizada { get; set; }        // → ComprovanteVie
 ```
 Singleton:  ConfiguracoesService, ErpApiConfig, ImpressoraConfig,
             ISessaoService (SessaoService),
-            ApiKeepAliveService,
+            ApiKeepAliveService, PdvLogger,
             IOperadorService (OperadorService),
             IImpressoraService (ImpressoraService),
             INFCeService (NFCeServiceStub), ITEFService (TEFServiceStub),
@@ -259,7 +328,8 @@ Transient:  PdvDbContext,
             IVendaService (VendaService),
             LoginViewModel, PDVViewModel,
             AberturaCaixaViewModel, PagamentoViewModel,
-            ConsultaProdutoViewModel, SangriaSuprimentoViewModel,
+            ConsultaProdutoViewModel, ConsultaClienteViewModel,
+            ConsultaVendasViewModel, SangriaSuprimentoViewModel,
             FechamentoCaixaViewModel, ConfiguracoesViewModel,
             ComprovanteViewModel
 
@@ -274,6 +344,7 @@ HttpClient: IApiClient → ErpApiClient (timeout de ErpApiConfig)
    → Popula ISessaoService (token, usuario, empresa, filial, filiais)
    → Paralelo: ObterConfiguracao + ObterFormasPagamento + ObterConfigTerminal
    → Inicia ApiKeepAliveService
+   → PdvLogger.Operacao("LOGIN")
 
 2. Abertura de Caixa
    AberturaCaixaVM carrega terminais de ISessaoService.ConfigTerminal
@@ -281,30 +352,45 @@ HttpClient: IApiClient → ErpApiClient (timeout de ErpApiConfig)
 
 3. Loop de Venda
    a. Escanear produto → IProdutoService.BuscarPorCodigoBarras → API GET /produto/buscar-codigo
+      (fallback: se >= 3 chars e nao encontrado, busca por nome)
    b. Adicionar ao carrinho (MEMORIA LOCAL — ObservableCollection<ItemVenda>)
    c. F2 → Pagamento → seleciona forma (dinamica da API), valor, troco
+      - Atalhos rapidos: 1-clique Dinheiro/PIX/Debito (auto-confirma)
 
 4. Finalizar Venda
    a. TEF local (se cartao)
    b. IApiClient.FinalizarVendaDireta(itens, parcelas, cpf, troco, uuid)
       → API POST /venda/finalizar-direto com X-Idempotency-Key
       → Servidor: recalcula precos, baixa estoque, emite NFC-e
+      → Retry automatico Polly (3x backoff exponencial)
    c. Imprime cupom local (se config)
-   d. Navega para comprovante
+   d. Abre gaveta (se pagamento em dinheiro)
+   e. PdvLogger.Operacao("VENDA_FINALIZADA")
+   f. Navega para comprovante
 
 5. Operacoes de Caixa
    Sangria: ICaixaService.RegistrarSangria → API POST /caixa/sangria
    Suprimento: ICaixaService.RegistrarSuprimento → API POST /caixa/suprimento
+   Leitura X: ObterResumoCaixa → exibe overlay + opcao imprimir
 
-6. Fechamento de Caixa
+6. Consultas
+   Vendas (F7): ListarVendas + ObterVendaDetalhe + EstornarVenda + Reimprimir
+   Produtos (F4): PesquisarProdutos + selecionar + inserir
+   Clientes (F3): BuscarClientes + BuscarClientePorDocumento
+   Busca Avancada (Ctrl+B): overlay inline com grid de resultados
+
+7. Fechamento de Caixa
    CarregarResumoCaixa → API GET /caixa/resumo
    FecharCaixa → API POST /caixa/fechar
+   Imprime relatorio na termica
 
-7. Keep-alive (background)
-   Ping: GET /ping a cada 10 min
+8. Keep-alive (background)
+   Ping: GET /ping a cada 10 min (ApiKeepAliveService)
    Refresh: POST /auth/refresh a cada 12h
+   Status bar: ping a cada 60s (PDVViewModel timer, atualiza indicadores)
 
-8. Logout
+9. Logout
+   PdvLogger.Operacao("LOGOUT")
    OperadorService.Logout → ISessaoService.Limpar + ApiKeepAliveService.Parar
 ```
 
@@ -341,6 +427,7 @@ Troca feita pela tela de Configuracoes (F10) via RadioButtons.
 - **DataGrid:** DataGridPDV, FioriColumnHeader, FioriDataGridRow, FioriDataGridCell
 - **Texto:** LabelPDV, TituloPDV, SubtituloPDV
 - **Layout:** CardPDV
+- **Status:** StatusDotOnline (pulsing green dot)
 - **Globais:** ScrollBar (thumb arredondado), ToolTip (fundo escuro), ProgressBar (Fiori)
 
 ## Configuracoes Persistidas (configuracoes.json)
@@ -384,6 +471,23 @@ Propriedades computadas ignoradas no mapeamento:
   Caixa.Diferenca, Caixa.Aberto
 ```
 
+## Log de Operacoes (PdvLogger)
+
+```
+Arquivo: %LOCALAPPDATA%\PDV\logs\pdv_YYYYMMDD.log
+Formato: 2026-03-01 14:30:15.123 [OPER] [Joao] VENDA_FINALIZADA | Pedido=678 Total=91.80 Itens=2
+
+Eventos registrados:
+  - LOGIN / LOGOUT
+  - VENDA_FINALIZADA (pedido, total, itens)
+  - VENDA_CANCELADA (total)
+  - SANGRIA / SUPRIMENTO (valor)
+  - Erros de pagamento e API
+
+Retencao: 30 dias (limpeza automatica no startup)
+Flush: ConcurrentQueue → arquivo a cada 2 segundos
+```
+
 ## Pacotes NuGet
 
 ```
@@ -400,7 +504,7 @@ PDV.Infrastructure:
   Microsoft.EntityFrameworkCore.Sqlite 8.0.x
   Microsoft.EntityFrameworkCore.Design 8.0.x
   ESCPOS_NET 3.0.0
-  Polly
+  Polly 8.6.5
   System.IO.Ports
   Microsoft.Extensions.Http
 ```
@@ -434,7 +538,7 @@ PDV.Core → PDV.Shared
 | 15 | Formas de pagamento dinamicas da API | PagamentoView |
 | 16 | Troco em tempo real por forma (PermiteTroco) | PagamentoView |
 | 17 | Selecao de terminal na abertura de caixa | AberturaCaixaView |
-| 18 | FadeContentControl — transicao fade 250ms entre telas | Controls |
+| 18 | FadeContentControl — slide + fade 220ms entre telas | Controls |
 | 19 | Relogio ao vivo no header (DispatcherTimer 1s, fonte Consolas) | PDVView |
 | 20 | Total grande 42px com "R$" separado + contagem itens | PDVView |
 | 21 | StatusDotOnline — bolinhas pulsando (opacity 1→0.3 em loop 2s) | PDVView |
@@ -442,6 +546,38 @@ PDV.Core → PDV.Shared
 | 23 | BotaoFuncao com sombra + ScaleTransform 1→1.06 animado (150ms) | Controls.xaml |
 | 24 | Ultimo item com destaque (card + valor 28px azul bold) | PDVView |
 | 25 | Tooltips nos botoes F2-F12 | PDVView |
+| 26 | Icones Segoe MDL2 Assets nos botoes de funcao | PDVView |
+| 27 | Grupos de botoes (VENDA/CONSULTAS/CAIXA/SISTEMA) com separadores | PDVView |
+| 28 | Badge no total de itens (PrimaryBrush) | PDVView |
+| 29 | Auto-scroll ao adicionar item | PDVView.xaml.cs |
+| 30 | Foto do produto no destaque do ultimo item | PDVView |
+| 31 | Busca por nome como fallback do codigo de barras | PDVViewModel |
+| 32 | +/- quantidade no item selecionado (teclas numpad) | PDVView |
+| 33 | F1 repetir ultimo item | PDVViewModel |
+| 34 | Help overlay com todos os atalhos organizados | PDVView |
+| 35 | Toast notifications (4s auto-dismiss, icone+cor por tipo) | PDVView + PDVViewModel |
+| 36 | Impressao relatorio fechamento na termica | FechamentoCaixaVM |
+| 37 | Abertura automatica de gaveta (pagamento em dinheiro) | PDVViewModel |
+| 38 | Leitura X overlay (resumo financeiro + imprimir) | PDVView + PDVViewModel |
+| 39 | Atalhos rapidos pagamento (1-clique Dinheiro/PIX/Debito) | PagamentoView |
+| 40 | Produtos recentes (strip de 6 chips, reuso rapido) | PDVView + PDVViewModel |
+| 41 | Teclado numerico virtual (touch) | PDVView + PDVViewModel |
+| 42 | Saldo atual + historico movimentos na sangria/suprimento | SangriaSuprimentoVM |
+| 43 | Animacao de transicao slide+fade entre telas | FadeContentControl |
+| 44 | Indicador de conexao API periodico (ping 60s, status bar) | PDVViewModel |
+| 45 | Busca avancada de produtos (Ctrl+B overlay com DataGrid) | PDVView + PDVViewModel |
+| 46 | Log de operacoes em arquivo (rotacao diaria, 30 dias) | PdvLogger |
+| 47 | Retry automatico Polly (3x backoff exponencial) | ErpApiClient |
+| 48 | Desconto F8 (overlay, item individual ou geral) | PDVView + PDVViewModel |
+| 49 | CPF na nota | PDVViewModel |
+| 50 | Consulta de vendas F7 (filtros, grid, detalhe, reimprimir, estorno) | ConsultaVendasView |
+| 51 | Consulta de clientes F3 | ConsultaClienteView |
+| 52 | Reimprimir cupom | ConsultaVendasVM |
+| 53 | Estorno de venda (com motivo) | ConsultaVendasVM |
+| 54 | Paginacao (carregar mais) na consulta de vendas | ConsultaVendasVM |
+| 55 | Timeout visual (tempo decorrido durante processamento) | PDVViewModel |
+| 56 | Atalho quantidade (3*codigo para 3 unidades) | PDVViewModel |
+| 57 | Logout (F11) | MainViewModel |
 
 ## Como Rodar
 
