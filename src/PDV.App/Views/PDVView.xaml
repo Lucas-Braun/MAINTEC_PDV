@@ -12,6 +12,7 @@
              Background="{DynamicResource BackgroundBrush}">
 
     <UserControl.InputBindings>
+        <KeyBinding Key="F1" Command="{Binding RepetirUltimoItemCommand}" />
         <KeyBinding Key="F2" Command="{Binding FinalizarVendaCommand}" />
         <KeyBinding Key="F3" Command="{Binding ConsultarClienteCommand}" />
         <KeyBinding Key="F4" Command="{Binding ConsultarProdutoCommand}" />
@@ -24,6 +25,8 @@
         <KeyBinding Key="F11" Command="{Binding TrocarOperadorCommand}" />
         <KeyBinding Key="F12" Command="{Binding FecharCaixaCommand}" />
         <KeyBinding Key="Delete" Command="{Binding RemoverItemCommand}" />
+        <KeyBinding Key="Add" Command="{Binding IncrementarQuantidadeCommand}" />
+        <KeyBinding Key="Subtract" Command="{Binding DecrementarQuantidadeCommand}" />
     </UserControl.InputBindings>
 
     <Grid>
@@ -185,14 +188,16 @@
 
                     <!-- Grid de itens da venda -->
                     <Grid Grid.Row="1">
-                        <DataGrid ItemsSource="{Binding Itens}"
+                        <DataGrid x:Name="GridItens"
+                                  ItemsSource="{Binding Itens}"
                                   SelectedItem="{Binding ItemSelecionado}"
                                   AutoGenerateColumns="False"
                                   CanUserAddRows="False"
                                   CanUserDeleteRows="False"
                                   CanUserSortColumns="False"
                                   CellEditEnding="DataGrid_CellEditEnding"
-                                  Style="{DynamicResource DataGridPDV}">
+                                  Style="{DynamicResource DataGridPDV}"
+                                  AlternatingRowBackground="#08FFFFFF">
 
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="#" Width="45"
@@ -275,7 +280,7 @@
 
                 <!-- Ultimo item adicionado -->
                 <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}"
-                        CornerRadius="12" Padding="20" Margin="0,0,0,10">
+                        CornerRadius="12" Padding="16" Margin="0,0,0,10">
                     <Border.Style>
                         <Style TargetType="Border">
                             <Style.Triggers>
@@ -286,37 +291,62 @@
                         </Style>
                     </Border.Style>
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Row="0" Text="ULTIMO ITEM"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                   FontSize="11" FontWeight="SemiBold" />
+                        <!-- Foto do produto -->
+                        <Border Grid.Column="0" Width="64" Height="64"
+                                CornerRadius="8" Margin="0,0,14,0"
+                                Background="{DynamicResource SurfaceLightBrush}">
+                            <Grid>
+                                <TextBlock Text="&#xE722;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="24"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Opacity="0.3"/>
+                                <Image Source="{Binding UltimoItemFotoUrl}"
+                                       Stretch="UniformToFill"
+                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Grid>
+                        </Border>
 
-                        <TextBlock Grid.Row="1"
-                                   Text="{Binding UltimoItemDescricao}"
-                                   Foreground="{DynamicResource TextBrush}"
-                                   FontSize="14" FontWeight="Bold"
-                                   TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
-                                   MaxHeight="40"
-                                   Margin="0,6,0,0" />
+                        <Grid Grid.Column="1">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="2"
-                                   Text="{Binding UltimoItemQtd}"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                   FontSize="12"
-                                   Margin="0,2,0,0" />
+                            <TextBlock Grid.Row="0" Text="ULTIMO ITEM (F1 repetir)"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       FontSize="10" FontWeight="SemiBold" />
 
-                        <TextBlock Grid.Row="3"
-                                   Text="{Binding UltimoItemPreco}"
-                                   Foreground="{DynamicResource PrimaryBrush}"
-                                   FontSize="28" FontWeight="ExtraBold"
-                                   HorizontalAlignment="Right"
-                                   Margin="0,4,0,0" />
+                            <TextBlock Grid.Row="1"
+                                       Text="{Binding UltimoItemDescricao}"
+                                       Foreground="{DynamicResource TextBrush}"
+                                       FontSize="13" FontWeight="Bold"
+                                       TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                                       MaxHeight="36"
+                                       Margin="0,4,0,0" />
+
+                            <TextBlock Grid.Row="2"
+                                       Text="{Binding UltimoItemQtd}"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       FontSize="11"
+                                       Margin="0,2,0,0" />
+
+                            <TextBlock Grid.Row="3"
+                                       Text="{Binding UltimoItemPreco}"
+                                       Foreground="{DynamicResource PrimaryBrush}"
+                                       FontSize="26" FontWeight="ExtraBold"
+                                       HorizontalAlignment="Right"
+                                       Margin="0,2,0,0" />
+                        </Grid>
                     </Grid>
                 </Border>
 
@@ -365,11 +395,15 @@
                                                FontSize="42" FontWeight="ExtraBold" />
                                 </StackPanel>
 
-                                <TextBlock Foreground="{DynamicResource TextSecondaryBrush}"
-                                           FontSize="12" Margin="0,4,0,0">
-                                    <Run Text="{Binding TotalItens, Mode=OneWay}" />
-                                    <Run Text=" itens" />
-                                </TextBlock>
+                                <Border Background="{DynamicResource PrimaryBrush}"
+                                        CornerRadius="10" Padding="10,3"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,6,0,0">
+                                    <TextBlock Foreground="White" FontSize="12" FontWeight="SemiBold">
+                                        <Run Text="{Binding TotalItens, Mode=OneWay}"/>
+                                        <Run Text=" itens"/>
+                                    </TextBlock>
+                                </Border>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -379,128 +413,191 @@
                 <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}"
                         CornerRadius="12" Padding="10">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <WrapPanel>
-                            <Button Style="{DynamicResource BotaoFuncao}"
-                                    Background="{DynamicResource PositiveBrush}"
-                                    Command="{Binding FinalizarVendaCommand}"
-                                    ToolTip="Finalizar venda e ir para pagamento (F2)">
-                                <StackPanel>
-                                    <TextBlock Text="PAGAMENTO" FontSize="14" FontWeight="Bold" />
-                                    <TextBlock Text="F2" FontSize="10" Opacity="0.7"
-                                               HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+                        <StackPanel>
+                            <!-- Grupo: Venda -->
+                            <TextBlock Text="VENDA" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Margin="6,2,0,4" Opacity="0.6"/>
+                            <WrapPanel>
+                                <Button Style="{DynamicResource BotaoFuncao}"
+                                        Background="{DynamicResource PositiveBrush}"
+                                        Command="{Binding FinalizarVendaCommand}"
+                                        ToolTip="Finalizar venda e ir para pagamento (F2)">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE7BF;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="18" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="PAGAMENTO" FontSize="11" FontWeight="Bold"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="F2" FontSize="9" Opacity="0.6"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
 
-                            <Button Style="{DynamicResource BotaoFuncao}"
-                                    Background="{DynamicResource PrimaryBrush}"
-                                    Command="{Binding ConsultarClienteCommand}"
-                                    ToolTip="Consultar ou cadastrar cliente (F3)">
-                                <StackPanel>
-                                    <TextBlock Text="CLIENTE" FontSize="14" FontWeight="Bold" />
-                                    <TextBlock Text="F3" FontSize="10" Opacity="0.7"
-                                               HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+                                <Button Style="{DynamicResource BotaoFuncao}"
+                                        Background="{DynamicResource NeutralBrush}"
+                                        Command="{Binding AbrirDescontoCommand}"
+                                        ToolTip="Aplicar desconto no item ou venda (F8)">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE8EF;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="18" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="DESCONTO" FontSize="11" FontWeight="Bold"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="F8" FontSize="9" Opacity="0.6"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
 
-                            <Button Style="{DynamicResource BotaoFuncao}"
-                                    Background="{DynamicResource PrimaryBrush}"
-                                    Command="{Binding ConsultarProdutoCommand}"
-                                    ToolTip="Consultar produto por nome ou codigo (F4)">
-                                <StackPanel>
-                                    <TextBlock Text="CONSULTA" FontSize="14" FontWeight="Bold" />
-                                    <TextBlock Text="F4" FontSize="10" Opacity="0.7"
-                                               HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+                                <Button Style="{DynamicResource BotaoFuncao}"
+                                        Background="{DynamicResource NegativeBrush}"
+                                        Command="{Binding CancelarVendaCommand}"
+                                        ToolTip="Cancelar a venda atual (F9)">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="18" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="CANCELAR" FontSize="11" FontWeight="Bold"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="F9" FontSize="9" Opacity="0.6"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
 
-                            <Button Style="{DynamicResource BotaoFuncao}"
-                                    Background="{DynamicResource CriticalBrush}"
-                                    Command="{Binding RealizarSangriaCommand}"
-                                    ToolTip="Retirar dinheiro do caixa (F5)">
-                                <StackPanel>
-                                    <TextBlock Text="SANGRIA" FontSize="14" FontWeight="Bold" />
-                                    <TextBlock Text="F5" FontSize="10" Opacity="0.7"
-                                               HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+                            <Separator Background="{DynamicResource SeparatorBrush}" Margin="4,6"/>
 
-                            <Button Style="{DynamicResource BotaoFuncao}"
-                                    Background="{DynamicResource PrimaryBrush}"
-                                    Command="{Binding RealizarSuprimentoCommand}"
-                                    ToolTip="Adicionar dinheiro ao caixa (F6)">
-                                <StackPanel>
-                                    <TextBlock Text="SUPRIMENTO" FontSize="14" FontWeight="Bold" />
-                                    <TextBlock Text="F6" FontSize="10" Opacity="0.7"
-                                               HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+                            <!-- Grupo: Consultas -->
+                            <TextBlock Text="CONSULTAS" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Margin="6,0,0,4" Opacity="0.6"/>
+                            <WrapPanel>
+                                <Button Style="{DynamicResource BotaoFuncao}"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Command="{Binding ConsultarClienteCommand}"
+                                        ToolTip="Consultar ou cadastrar cliente (F3)">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="18" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="CLIENTE" FontSize="11" FontWeight="Bold"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="F3" FontSize="9" Opacity="0.6"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
 
-                            <Button Style="{DynamicResource BotaoFuncao}"
-                                    Background="{DynamicResource PrimaryBrush}"
-                                    Command="{Binding ConsultarVendasCommand}"
-                                    ToolTip="Consultar vendas realizadas (F7)">
-                                <StackPanel>
-                                    <TextBlock Text="VENDAS" FontSize="14" FontWeight="Bold" />
-                                    <TextBlock Text="F7" FontSize="10" Opacity="0.7"
-                                               HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+                                <Button Style="{DynamicResource BotaoFuncao}"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Command="{Binding ConsultarProdutoCommand}"
+                                        ToolTip="Consultar produto por nome ou codigo (F4)">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="18" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="CONSULTA" FontSize="11" FontWeight="Bold"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="F4" FontSize="9" Opacity="0.6"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
 
-                            <Button Style="{DynamicResource BotaoFuncao}"
-                                    Background="{DynamicResource NeutralBrush}"
-                                    Command="{Binding AbrirDescontoCommand}"
-                                    ToolTip="Aplicar desconto no item ou venda (F8)">
-                                <StackPanel>
-                                    <TextBlock Text="DESCONTO" FontSize="14" FontWeight="Bold" />
-                                    <TextBlock Text="F8" FontSize="10" Opacity="0.7"
-                                               HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+                                <Button Style="{DynamicResource BotaoFuncao}"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Command="{Binding ConsultarVendasCommand}"
+                                        ToolTip="Consultar vendas realizadas (F7)">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE8A1;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="18" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="VENDAS" FontSize="11" FontWeight="Bold"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="F7" FontSize="9" Opacity="0.6"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
 
-                            <Button Style="{DynamicResource BotaoFuncao}"
-                                    Background="{DynamicResource NegativeBrush}"
-                                    Command="{Binding CancelarVendaCommand}"
-                                    ToolTip="Cancelar a venda atual (F9)">
-                                <StackPanel>
-                                    <TextBlock Text="CANCELAR" FontSize="14" FontWeight="Bold" />
-                                    <TextBlock Text="F9" FontSize="10" Opacity="0.7"
-                                               HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+                            <Separator Background="{DynamicResource SeparatorBrush}" Margin="4,6"/>
 
-                            <Button Style="{DynamicResource BotaoFuncao}"
-                                    Background="{DynamicResource NeutralBrush}"
-                                    Command="{Binding AbrirConfiguracoesCommand}"
-                                    ToolTip="Configuracoes do sistema (F10)">
-                                <StackPanel>
-                                    <TextBlock Text="CONFIG" FontSize="14" FontWeight="Bold" />
-                                    <TextBlock Text="F10" FontSize="10" Opacity="0.7"
-                                               HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+                            <!-- Grupo: Caixa -->
+                            <TextBlock Text="CAIXA" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Margin="6,0,0,4" Opacity="0.6"/>
+                            <WrapPanel>
+                                <Button Style="{DynamicResource BotaoFuncao}"
+                                        Background="{DynamicResource CriticalBrush}"
+                                        Command="{Binding RealizarSangriaCommand}"
+                                        ToolTip="Retirar dinheiro do caixa (F5)">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE74B;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="18" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="SANGRIA" FontSize="11" FontWeight="Bold"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="F5" FontSize="9" Opacity="0.6"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
 
-                            <Button Style="{DynamicResource BotaoFuncao}"
-                                    Background="{DynamicResource NeutralBrush}"
-                                    Command="{Binding TrocarOperadorCommand}"
-                                    ToolTip="Trocar operador / Logout (F11)">
-                                <StackPanel>
-                                    <TextBlock Text="LOGOUT" FontSize="14" FontWeight="Bold" />
-                                    <TextBlock Text="F11" FontSize="10" Opacity="0.7"
-                                               HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+                                <Button Style="{DynamicResource BotaoFuncao}"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Command="{Binding RealizarSuprimentoCommand}"
+                                        ToolTip="Adicionar dinheiro ao caixa (F6)">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="18" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="SUPRIMENTO" FontSize="11" FontWeight="Bold"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="F6" FontSize="9" Opacity="0.6"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
 
-                            <Button Style="{DynamicResource BotaoFuncao}"
-                                    Background="{DynamicResource NeutralBrush}"
-                                    Command="{Binding FecharCaixaCommand}"
-                                    ToolTip="Fechar o caixa e gerar relatorio (F12)">
-                                <StackPanel>
-                                    <TextBlock Text="FECHAR CAIXA" FontSize="14" FontWeight="Bold" />
-                                    <TextBlock Text="F12" FontSize="10" Opacity="0.7"
-                                               HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
-                        </WrapPanel>
+                                <Button Style="{DynamicResource BotaoFuncao}"
+                                        Background="{DynamicResource NeutralBrush}"
+                                        Command="{Binding FecharCaixaCommand}"
+                                        ToolTip="Fechar o caixa e gerar relatorio (F12)">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE7E8;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="18" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="FECHAR CX" FontSize="11" FontWeight="Bold"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="F12" FontSize="9" Opacity="0.6"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
+
+                            <Separator Background="{DynamicResource SeparatorBrush}" Margin="4,6"/>
+
+                            <!-- Grupo: Sistema -->
+                            <TextBlock Text="SISTEMA" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Margin="6,0,0,4" Opacity="0.6"/>
+                            <WrapPanel>
+                                <Button Style="{DynamicResource BotaoFuncao}"
+                                        Background="{DynamicResource NeutralBrush}"
+                                        Command="{Binding AbrirConfiguracoesCommand}"
+                                        ToolTip="Configuracoes do sistema (F10)">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="18" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="CONFIG" FontSize="11" FontWeight="Bold"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="F10" FontSize="9" Opacity="0.6"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{DynamicResource BotaoFuncao}"
+                                        Background="{DynamicResource NeutralBrush}"
+                                        Command="{Binding TrocarOperadorCommand}"
+                                        ToolTip="Trocar operador / Logout (F11)">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE748;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="18" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="LOGOUT" FontSize="11" FontWeight="Bold"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="F11" FontSize="9" Opacity="0.6"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
+                        </StackPanel>
                     </ScrollViewer>
                 </Border>
             </Grid>

@@ -103,6 +103,12 @@ public partial class PDVViewModel : ObservableObject
     [ObservableProperty]
     private string _ultimoItemQtd = string.Empty;
 
+    [ObservableProperty]
+    private string? _ultimoItemFotoUrl;
+
+    // Ultimo produto adicionado (para F1 repetir)
+    private Produto? _ultimoProduto;
+
     // Cliente associado a venda
     [ObservableProperty]
     private string _nomeCliente = string.Empty;
@@ -218,6 +224,14 @@ public partial class PDVViewModel : ObservableObject
 
             var produto = await _produtoService.BuscarPorCodigoBarras(codigo);
 
+            // Fallback: busca por nome se nao achou por codigo
+            if (produto == null && codigo.Length >= 3 && !codigo.All(char.IsDigit))
+            {
+                var resultados = await _apiClient.PesquisarProdutos(codigo, 1);
+                if (resultados.Count > 0)
+                    produto = resultados[0];
+            }
+
             if (produto == null)
             {
                 MensagemStatus = $"Produto nao encontrado: {codigo}";
@@ -288,10 +302,12 @@ public partial class PDVViewModel : ObservableObject
         // Beep ao adicionar produto
         try { System.Media.SystemSounds.Beep.Play(); } catch { }
 
+        _ultimoProduto = produto;
         MensagemStatus = $"{produto.Descricao} - {quantidade} x {produto.PrecoVenda:C2}";
         UltimoItemDescricao = produto.Descricao;
         UltimoItemPreco = (quantidade * produto.PrecoVenda).ToString("C2");
         UltimoItemQtd = $"{quantidade:N0} x {produto.PrecoVenda:C2}";
+        UltimoItemFotoUrl = produto.FotoUrl;
         AtualizarTotais();
     }
 
@@ -485,6 +501,58 @@ public partial class PDVViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void RepetirUltimoItem()
+    {
+        if (_ultimoProduto == null)
+        {
+            MensagemStatus = "Nenhum item para repetir";
+            return;
+        }
+        AdicionarItemVenda(_ultimoProduto, 1);
+    }
+
+    [RelayCommand]
+    private void IncrementarQuantidade()
+    {
+        if (ItemSelecionado == null) return;
+        ItemSelecionado.Quantidade += 1;
+        var index = Itens.IndexOf(ItemSelecionado);
+        if (index >= 0)
+        {
+            var item = ItemSelecionado;
+            Itens.RemoveAt(index);
+            Itens.Insert(index, item);
+            ItemSelecionado = item;
+        }
+        VendaAtual.Itens = Itens.ToList();
+        AtualizarTotais();
+        MensagemStatus = $"{ItemSelecionado.DescricaoProduto} - Qtd: {ItemSelecionado.Quantidade:N2}";
+    }
+
+    [RelayCommand]
+    private void DecrementarQuantidade()
+    {
+        if (ItemSelecionado == null) return;
+        if (ItemSelecionado.Quantidade <= 1)
+        {
+            MensagemStatus = "Use DEL para remover o item";
+            return;
+        }
+        ItemSelecionado.Quantidade -= 1;
+        var index = Itens.IndexOf(ItemSelecionado);
+        if (index >= 0)
+        {
+            var item = ItemSelecionado;
+            Itens.RemoveAt(index);
+            Itens.Insert(index, item);
+            ItemSelecionado = item;
+        }
+        VendaAtual.Itens = Itens.ToList();
+        AtualizarTotais();
+        MensagemStatus = $"{ItemSelecionado.DescricaoProduto} - Qtd: {ItemSelecionado.Quantidade:N2}";
+    }
+
+    [RelayCommand]
     private void AbrirDesconto()
     {
         if (ItemSelecionado == null && !Itens.Any())
@@ -642,6 +710,10 @@ public partial class PDVViewModel : ObservableObject
         NomeCliente = string.Empty;
         CpfCliente = string.Empty;
         CpfNotaInput = string.Empty;
+        UltimoItemDescricao = string.Empty;
+        UltimoItemPreco = string.Empty;
+        UltimoItemQtd = string.Empty;
+        UltimoItemFotoUrl = null;
         OnPropertyChanged(nameof(ClienteDefinido));
         AtualizarTotais();
     }

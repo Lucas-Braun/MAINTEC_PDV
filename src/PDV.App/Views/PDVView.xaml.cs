@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -11,6 +12,26 @@ public partial class PDVView : UserControl
     public PDVView()
     {
         InitializeComponent();
+        DataContextChanged += OnDataContextChanged;
+    }
+
+    private void OnDataContextChanged(object sender, System.Windows.DependencyPropertyChangedEventArgs e)
+    {
+        if (e.NewValue is PDVViewModel vm)
+        {
+            vm.Itens.CollectionChanged += Itens_CollectionChanged;
+        }
+    }
+
+    private void Itens_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.Action == NotifyCollectionChangedAction.Add && GridItens.Items.Count > 0)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                GridItens.ScrollIntoView(GridItens.Items[GridItens.Items.Count - 1]);
+            }), DispatcherPriority.Background);
+        }
     }
 
     private void DataGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
