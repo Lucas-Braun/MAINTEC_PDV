@@ -63,6 +63,7 @@ public partial class MainViewModel : ObservableObject
         pdvVm.SolicitarSangria = () => NavegarParaSangriaSuprimento(TipoMovimentoCaixa.Sangria);
         pdvVm.SolicitarSuprimento = () => NavegarParaSangriaSuprimento(TipoMovimentoCaixa.Suprimento);
         pdvVm.SolicitarFechamento = NavegarParaFechamentoCaixa;
+        pdvVm.SolicitarConsultaVendas = NavegarParaConsultaVendas;
         pdvVm.SolicitarConfiguracoes = () => NavegarParaConfiguracoes();
         pdvVm.VendaFinalizada = NavegarParaComprovante;
     }
@@ -174,6 +175,13 @@ public partial class MainViewModel : ObservableObject
             _pdvVmAtual?.NovaVenda();
             NavegarParaPDV();
         };
+        TelaAtual = vm;
+    }
+
+    private void NavegarParaConsultaVendas()
+    {
+        var vm = _services.GetRequiredService<ConsultaVendasViewModel>();
+        vm.Cancelado = () => TelaAtual = _pdvVmAtual;
         TelaAtual = vm;
     }
 

@@ -1,0 +1,307 @@
+<UserControl x:Class="PDV.App.Views.ConsultaVendasView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource BackgroundBrush}">
+
+    <UserControl.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding VoltarCommand}"/>
+    </UserControl.InputBindings>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="200"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ============================================= -->
+        <!-- FILTROS                                       -->
+        <!-- ============================================= -->
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12" Padding="20" Margin="0,0,0,10"
+                Effect="{DynamicResource CardShadow}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="CONSULTA DE VENDAS (F7)"
+                           Style="{DynamicResource TituloPDV}"
+                           FontSize="22"
+                           Margin="0,0,0,14"/>
+
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="Data Inicio:"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="13" VerticalAlignment="Center"
+                               Margin="0,0,8,0"/>
+                    <DatePicker Grid.Column="1"
+                                SelectedDate="{Binding DataInicio}"
+                                Width="130" FontSize="13"
+                                Margin="0,0,16,0"/>
+
+                    <TextBlock Grid.Column="2" Text="Data Fim:"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="13" VerticalAlignment="Center"
+                               Margin="0,0,8,0"/>
+                    <DatePicker Grid.Column="3"
+                                SelectedDate="{Binding DataFim}"
+                                Width="130" FontSize="13"
+                                Margin="0,0,16,0"/>
+
+                    <TextBlock Grid.Column="4" Text="Status:"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="13" VerticalAlignment="Center"
+                               Margin="0,0,8,0"/>
+                    <ComboBox Grid.Column="5"
+                              ItemsSource="{Binding StatusOpcoes}"
+                              SelectedValuePath="Key"
+                              DisplayMemberPath="Value"
+                              SelectedValue="{Binding StatusFiltro}"
+                              Width="130" FontSize="13"
+                              Margin="0,0,16,0"/>
+
+                    <TextBlock Grid.Column="6" Text="NF:"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="13" VerticalAlignment="Center"
+                               Margin="0,0,8,0"/>
+                    <TextBox Grid.Column="7"
+                             Text="{Binding FiltroNf, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource TextBoxPDV}"
+                             Width="100" FontSize="13" Padding="8,6"
+                             Margin="0,0,16,0">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Return" Command="{Binding PesquisarCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
+
+                    <Button Grid.Column="8" Content="PESQUISAR"
+                            Command="{Binding PesquisarCommand}"
+                            Style="{DynamicResource BotaoPDV}"
+                            FontSize="14" Height="38"
+                            IsEnabled="{Binding Processando, Converter={StaticResource InvertBool}}"/>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- ============================================= -->
+        <!-- GRID DE VENDAS                                -->
+        <!-- ============================================= -->
+        <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12" Padding="0" Margin="0,0,0,10"
+                Effect="{DynamicResource CardShadow}">
+            <DataGrid ItemsSource="{Binding Vendas}"
+                      SelectedItem="{Binding VendaSelecionada}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      Style="{DynamicResource DataGridPDV}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="NF" Width="70"
+                        Binding="{Binding NfNumero}">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="DATA" Width="100"
+                        Binding="{Binding Data}"/>
+                    <DataGridTextColumn Header="HORA" Width="60"
+                        Binding="{Binding Hora}"/>
+                    <DataGridTextColumn Header="STATUS" Width="110"
+                        Binding="{Binding StatusNome}"/>
+                    <DataGridTextColumn Header="TOTAL" Width="110"
+                        Binding="{Binding Total, StringFormat=C2}">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="Foreground" Value="{DynamicResource PositiveBrush}"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="ITENS" Width="60"
+                        Binding="{Binding QtdItens}"/>
+                    <DataGridTextColumn Header="CLIENTE" Width="*"
+                        Binding="{Binding ClienteNome}"/>
+                    <DataGridTextColumn Header="PAGAMENTO" Width="120"
+                        Binding="{Binding FormaPagamento}"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- ============================================= -->
+        <!-- RESUMO DA VENDA SELECIONADA                   -->
+        <!-- ============================================= -->
+        <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12" Padding="16" Margin="0,0,0,10"
+                Effect="{DynamicResource CardShadow}">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding DetalheAtual}" Value="{x:Null}">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
+                    <Run Text="DETALHES DA VENDA" FontWeight="Bold" FontSize="13"
+                         Foreground="{DynamicResource TextSecondaryBrush}"/>
+                </TextBlock>
+
+                <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="0,0,20,0">
+                    <Run Text="NF: " Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    <Run Text="{Binding DetalheAtual.NfInCodigo, Mode=OneWay, FallbackValue=-}"
+                         FontWeight="Bold" Foreground="{DynamicResource TextBrush}"/>
+                </TextBlock>
+
+                <TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="0,0,20,0">
+                    <Run Text="Status: " Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    <Run Text="{Binding DetalheAtual.StatusNome, Mode=OneWay, FallbackValue=-}"
+                         FontWeight="Bold" Foreground="{DynamicResource TextBrush}"/>
+                </TextBlock>
+
+                <TextBlock Grid.Column="3" VerticalAlignment="Center" Margin="0,0,20,0">
+                    <Run Text="Total: " Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    <Run Text="{Binding DetalheAtual.ValorTotal, Mode=OneWay, StringFormat=C2, FallbackValue=-}"
+                         FontWeight="Bold" Foreground="{DynamicResource PositiveBrush}"/>
+                </TextBlock>
+
+                <TextBlock Grid.Column="4" VerticalAlignment="Center" Margin="0,0,20,0">
+                    <Run Text="Pgto: " Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    <Run Text="{Binding DetalheAtual.FormaPagamento, Mode=OneWay, FallbackValue=-}"
+                         FontWeight="Bold" Foreground="{DynamicResource TextBrush}"/>
+                </TextBlock>
+
+                <TextBlock Grid.Column="5" VerticalAlignment="Center" Margin="0,0,20,0">
+                    <Run Text="CPF: " Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    <Run Text="{Binding DetalheAtual.CpfNota, Mode=OneWay, FallbackValue=-}"
+                         Foreground="{DynamicResource TextBrush}"/>
+                </TextBlock>
+
+                <TextBlock Grid.Column="6" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis">
+                    <Run Text="Chave: " Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    <Run Text="{Binding DetalheAtual.NfceChave, Mode=OneWay, FallbackValue=-}"
+                         Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11"/>
+                </TextBlock>
+            </Grid>
+        </Border>
+
+        <!-- ============================================= -->
+        <!-- LABEL ITENS                                   -->
+        <!-- ============================================= -->
+        <TextBlock Grid.Row="3" Text="ITENS DA VENDA"
+                   Foreground="{DynamicResource TextSecondaryBrush}"
+                   FontSize="12" FontWeight="SemiBold"
+                   Margin="4,0,0,4"/>
+
+        <!-- ============================================= -->
+        <!-- GRID DE ITENS                                 -->
+        <!-- ============================================= -->
+        <Border Grid.Row="4" Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12" Padding="0" Margin="0,0,0,10"
+                Effect="{DynamicResource CardShadow}">
+            <DataGrid ItemsSource="{Binding ItensDetalhe}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      Style="{DynamicResource DataGridPDV}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="#" Width="45"
+                        Binding="{Binding Sequencia}"/>
+                    <DataGridTextColumn Header="CODIGO" Width="120"
+                        Binding="{Binding Codigo}"/>
+                    <DataGridTextColumn Header="DESCRICAO" Width="*"
+                        Binding="{Binding Descricao}"/>
+                    <DataGridTextColumn Header="UN" Width="50"
+                        Binding="{Binding Unidade}"/>
+                    <DataGridTextColumn Header="QTD" Width="70"
+                        Binding="{Binding Quantidade, StringFormat=N2}"/>
+                    <DataGridTextColumn Header="VL. UNIT." Width="100"
+                        Binding="{Binding PrecoUnitario, StringFormat=C2}"/>
+                    <DataGridTextColumn Header="TOTAL" Width="110"
+                        Binding="{Binding Total, StringFormat=C2}">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="Foreground" Value="{DynamicResource PositiveBrush}"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- ============================================= -->
+        <!-- RODAPE - MENSAGENS + VOLTAR                   -->
+        <!-- ============================================= -->
+        <Grid Grid.Row="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="Pesquisando..."
+                           FontSize="13"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           Visibility="{Binding Processando, Converter={StaticResource BoolToVisibility}}"/>
+                <TextBox Text="{Binding MensagemErro, Mode=OneWay}"
+                         Foreground="{DynamicResource NegativeBrush}"
+                         FontSize="13" IsReadOnly="True"
+                         BorderThickness="0" Background="Transparent"
+                         TextWrapping="Wrap"
+                         Visibility="{Binding MensagemErro, Converter={StaticResource StringToVisibility}}"/>
+                <TextBlock FontSize="12"
+                           Foreground="{DynamicResource TextSecondaryBrush}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Processando}" Value="False">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                    <Run Text="{Binding TotalRegistros, Mode=OneWay}"/>
+                    <Run Text=" venda(s) encontrada(s)"/>
+                </TextBlock>
+            </StackPanel>
+
+            <Button Grid.Column="2" Content="VOLTAR (ESC)"
+                    Command="{Binding VoltarCommand}"
+                    Style="{DynamicResource BotaoNeutral}"
+                    FontSize="14" Height="48"/>
+        </Grid>
+    </Grid>
+
+</UserControl>

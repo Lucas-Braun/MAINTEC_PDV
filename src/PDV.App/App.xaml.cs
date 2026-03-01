@@ -103,6 +103,7 @@ public partial class App : Application
         services.AddTransient<PagamentoViewModel>();
         services.AddTransient<ConsultaProdutoViewModel>();
         services.AddTransient<ConsultaClienteViewModel>();
+        services.AddTransient<ConsultaVendasViewModel>();
         services.AddTransient<SangriaSuprimentoViewModel>();
         services.AddTransient<FechamentoCaixaViewModel>();
         services.AddTransient<ConfiguracoesViewModel>();

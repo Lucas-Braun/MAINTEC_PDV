@@ -30,6 +30,9 @@
         <DataTemplate DataType="{x:Type vm:ConsultaClienteViewModel}">
             <views:ConsultaClienteView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ConsultaVendasViewModel}">
+            <views:ConsultaVendasView/>
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:SangriaSuprimentoViewModel}">
             <views:SangriaSuprimentoView/>
         </DataTemplate>

@@ -30,6 +30,10 @@ public interface IApiClient
     Task<ResultadoVenda> FinalizarVendaDireta(List<ItemVendaApi> itens, List<ParcelaApi> parcelas,
         string? cpfNota, decimal? troco, string idempotencyKey);
 
+    // Venda - Consulta
+    Task<List<VendaResumo>> ListarVendas(DateTime dataInicio, DateTime dataFim, string? status, int limite = 50);
+    Task<VendaDetalhe?> ObterVendaDetalhe(int nfInCodigo);
+
     // Cliente
     Task<List<Cliente>> BuscarClientes(string termo);
     Task<Cliente?> BuscarClientePorDocumento(string cpfCnpj);

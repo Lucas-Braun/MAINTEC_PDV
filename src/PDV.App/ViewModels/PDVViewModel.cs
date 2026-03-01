@@ -48,6 +48,7 @@ public partial class PDVViewModel : ObservableObject
     public Action? SolicitarSangria { get; set; }
     public Action? SolicitarSuprimento { get; set; }
     public Action? SolicitarFechamento { get; set; }
+    public Action? SolicitarConsultaVendas { get; set; }
     public Action? SolicitarConfiguracoes { get; set; }
     public Action<Venda>? VendaFinalizada { get; set; }
 
@@ -376,6 +377,12 @@ public partial class PDVViewModel : ObservableObject
             MensagemStatus = "Cliente removido da venda";
         }
         OnPropertyChanged(nameof(ClienteDefinido));
+    }
+
+    [RelayCommand]
+    private void ConsultarVendas()
+    {
+        SolicitarConsultaVendas?.Invoke();
     }
 
     [RelayCommand]

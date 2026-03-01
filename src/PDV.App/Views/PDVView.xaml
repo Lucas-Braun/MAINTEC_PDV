@@ -17,6 +17,7 @@
         <KeyBinding Key="F4" Command="{Binding ConsultarProdutoCommand}" />
         <KeyBinding Key="F5" Command="{Binding RealizarSangriaCommand}" />
         <KeyBinding Key="F6" Command="{Binding RealizarSuprimentoCommand}" />
+        <KeyBinding Key="F7" Command="{Binding ConsultarVendasCommand}" />
         <KeyBinding Key="F9" Command="{Binding CancelarVendaCommand}" />
         <KeyBinding Key="F10" Command="{Binding AbrirConfiguracoesCommand}" />
         <KeyBinding Key="F12" Command="{Binding FecharCaixaCommand}" />
@@ -408,6 +409,17 @@
                                 <StackPanel>
                                     <TextBlock Text="SUPRIMENTO" FontSize="14" FontWeight="Bold" />
                                     <TextBlock Text="F6" FontSize="10" Opacity="0.7"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Style="{DynamicResource BotaoFuncao}"
+                                    Background="{DynamicResource PrimaryBrush}"
+                                    Command="{Binding ConsultarVendasCommand}"
+                                    ToolTip="Consultar vendas realizadas (F7)">
+                                <StackPanel>
+                                    <TextBlock Text="VENDAS" FontSize="14" FontWeight="Bold" />
+                                    <TextBlock Text="F7" FontSize="10" Opacity="0.7"
                                                HorizontalAlignment="Center" />
                                 </StackPanel>
                             </Button>

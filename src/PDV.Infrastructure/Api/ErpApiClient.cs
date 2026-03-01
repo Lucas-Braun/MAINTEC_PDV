@@ -522,6 +522,100 @@ public class ErpApiClient : IApiClient
         }
     }
 
+    // ======================== VENDA - CONSULTA ========================
+
+    public async Task<List<VendaResumo>> ListarVendas(DateTime dataInicio, DateTime dataFim, string? status, int limite = 50)
+    {
+        try
+        {
+            var url = $"{_prefix}/vendas?data_inicio={dataInicio:yyyy-MM-dd}&data_fim={dataFim:yyyy-MM-dd}&limit={limite}";
+            if (!string.IsNullOrEmpty(status))
+                url += $"&status={Uri.EscapeDataString(status)}";
+
+            using var request = CriarRequest(HttpMethod.Get, url);
+            var response = await _httpClient.SendAsync(request);
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+                throw new Exception($"API retornou {(int)response.StatusCode}: {json}");
+
+            var dto = JsonSerializer.Deserialize<ListarVendasResponse>(json, _jsonOptions);
+
+            return dto?.Vendas?.Select(v => new VendaResumo
+            {
+                NfInCodigo = v.NfInCodigo,
+                NfNumero = v.NfNumero,
+                Data = v.Data,
+                Hora = v.Hora,
+                Status = v.Status,
+                StatusNome = v.StatusNome,
+                StatusCor = v.StatusCor,
+                Total = v.Total,
+                QtdItens = v.QtdItens,
+                ClienteNome = v.ClienteNome,
+                CpfNota = v.CpfNota,
+                FormaPagamento = v.FormaPagamento,
+                Caixa = v.Caixa,
+                Chave = v.Chave,
+                MotivoRejeicao = v.MotivoRejeicao
+            }).ToList() ?? new();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Erro ao listar vendas: {ex.Message}");
+        }
+    }
+
+    public async Task<VendaDetalhe?> ObterVendaDetalhe(int nfInCodigo)
+    {
+        try
+        {
+            using var request = CriarRequest(HttpMethod.Get, $"{_prefix}/venda/{nfInCodigo}");
+            var response = await _httpClient.SendAsync(request);
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+                throw new Exception($"API retornou {(int)response.StatusCode}: {json}");
+
+            var dto = JsonSerializer.Deserialize<DetalheVendaResponse>(json, _jsonOptions);
+
+            if (dto?.Success != true || dto.Venda == null) return null;
+
+            return new VendaDetalhe
+            {
+                NfInCodigo = dto.Venda.NfInCodigo,
+                ValorTotal = dto.Venda.ValorTotal,
+                ValorRecebido = dto.Venda.ValorRecebido,
+                Troco = dto.Venda.Troco,
+                Status = dto.Venda.Status,
+                StatusNome = dto.Venda.StatusNome,
+                DataEmissao = dto.Venda.DataEmissao,
+                CpfNota = dto.Venda.CpfNota,
+                FormaPagamento = dto.Venda.FormaPagamento,
+                QtdItens = dto.Venda.QtdItens,
+                NfceChave = dto.Venda.Nfce?.Chave,
+                NfceStatus = dto.Venda.Nfce?.Status,
+                Itens = dto.Itens?.Select(i => new ItemVendaDetalhe
+                {
+                    Sequencia = i.Sequencia,
+                    ProInCodigo = i.ProInCodigo,
+                    Codigo = i.Codigo,
+                    Descricao = i.Descricao,
+                    Unidade = i.Unidade,
+                    Quantidade = i.Quantidade,
+                    PrecoUnitario = i.PrecoUnitario,
+                    Total = i.Total
+                }).ToList() ?? new()
+            };
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Erro ao obter detalhe da venda: {ex.Message}");
+        }
+    }
+
     // ======================== CLIENTE ========================
 
     public async Task<List<Cliente>> BuscarClientes(string termo)
