@@ -63,9 +63,20 @@
                     <KeyBinding Key="Return" Command="{Binding SelecionarCommand}"/>
                 </DataGrid.InputBindings>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="CODIGO" Width="120"
+                    <DataGridTemplateColumn Header="" Width="50">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Image Source="{Binding FotoUrl}"
+                                       Width="36" Height="36"
+                                       Stretch="UniformToFill"
+                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                       Margin="2"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="CODIGO" Width="80"
                         Binding="{Binding CodigoInterno}"/>
-                    <DataGridTextColumn Header="COD. BARRAS" Width="150"
+                    <DataGridTextColumn Header="EAN" Width="140"
                         Binding="{Binding CodigoBarras}"/>
                     <DataGridTextColumn Header="DESCRICAO" Width="*"
                         Binding="{Binding Descricao}"/>
@@ -106,13 +117,19 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Loading -->
-            <TextBlock Grid.Column="0"
-                       Text="Pesquisando..."
-                       FontSize="13"
-                       Foreground="{DynamicResource TextSecondaryBrush}"
-                       VerticalAlignment="Center"
-                       Visibility="{Binding Processando, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- Loading / Erro -->
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="Pesquisando..."
+                           FontSize="13"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           Visibility="{Binding Processando, Converter={StaticResource BoolToVisibility}}"/>
+                <TextBox Text="{Binding MensagemErro, Mode=OneWay}"
+                         Foreground="{DynamicResource NegativeBrush}"
+                         FontSize="13" IsReadOnly="True"
+                         BorderThickness="0" Background="Transparent"
+                         TextWrapping="Wrap"
+                         Visibility="{Binding MensagemErro, Converter={StaticResource StringToVisibility}}"/>
+            </StackPanel>
 
             <Button Grid.Column="1" Content="VOLTAR (ESC)"
                     Command="{Binding VoltarCommand}"

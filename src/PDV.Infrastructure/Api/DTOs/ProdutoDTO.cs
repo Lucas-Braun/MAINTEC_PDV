@@ -28,14 +28,14 @@ public class ProdutoApiDTO
     [JsonPropertyName("pro_in_codigo")]
     public int ProInCodigo { get; set; }
 
-    [JsonPropertyName("pro_st_descricao")]
-    public string ProStDescricao { get; set; } = string.Empty;
+    [JsonPropertyName("descricao")]
+    public string Descricao { get; set; } = string.Empty;
 
-    [JsonPropertyName("pro_st_referencia")]
-    public string? ProStReferencia { get; set; }
+    [JsonPropertyName("codigo")]
+    public string? Codigo { get; set; }
 
-    [JsonPropertyName("pro_st_codigo_barras")]
-    public string? ProStCodigoBarras { get; set; }
+    [JsonPropertyName("ean")]
+    public string? Ean { get; set; }
 
     [JsonPropertyName("unidade")]
     public string Unidade { get; set; } = "UN";
@@ -46,6 +46,10 @@ public class ProdutoApiDTO
     [JsonPropertyName("estoque")]
     public decimal Estoque { get; set; }
 
+    [JsonPropertyName("foto_url")]
+    public string? FotoUrl { get; set; }
+
+    // Campos fiscais (podem vir em buscar-codigo detalhado)
     [JsonPropertyName("ncm")]
     public string? Ncm { get; set; }
 

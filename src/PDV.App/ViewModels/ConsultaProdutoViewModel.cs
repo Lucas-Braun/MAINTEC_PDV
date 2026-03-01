@@ -32,6 +32,9 @@ public partial class ConsultaProdutoViewModel : ObservableObject
     [ObservableProperty]
     private bool _processando = false;
 
+    [ObservableProperty]
+    private string _mensagemErro = string.Empty;
+
     [RelayCommand]
     private async Task Pesquisar()
     {
@@ -40,14 +43,18 @@ public partial class ConsultaProdutoViewModel : ObservableObject
         try
         {
             Processando = true;
+            MensagemErro = string.Empty;
             var resultado = await _produtoService.Pesquisar(TermoBusca);
             Produtos.Clear();
             foreach (var p in resultado)
                 Produtos.Add(p);
+
+            if (resultado.Count == 0)
+                MensagemErro = "Nenhum produto encontrado";
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Silently handle - empty results shown
+            MensagemErro = $"Erro: {ex.Message}";
         }
         finally
         {

@@ -72,21 +72,30 @@ public partial class AberturaCaixaViewModel : ObservableObject
             MensagemErro = string.Empty;
 
             int? terInCodigo = null;
-            if (!UsarTerminalFixo)
+            if (TerminalSelecionado != null)
             {
-                if (TerminalSelecionado == null)
-                {
-                    MensagemErro = "Selecione um terminal";
-                    return;
-                }
                 terInCodigo = TerminalSelecionado.TerInCodigo;
+            }
+            else if (!UsarTerminalFixo)
+            {
+                MensagemErro = "Selecione um terminal";
+                return;
             }
 
             var resultado = await _caixaService.AbrirCaixa(ValorAbertura, terInCodigo);
 
             if (!resultado.Sucesso)
             {
-                MensagemErro = resultado.Erro ?? "Erro ao abrir caixa";
+                // Se ja tem caixa aberto, vai direto pro PDV
+                var erro = resultado.Erro ?? "";
+                if (erro.Contains("ja tem caixa aberto", StringComparison.OrdinalIgnoreCase)
+                    || erro.Contains("já tem caixa aberto", StringComparison.OrdinalIgnoreCase))
+                {
+                    CaixaAberto?.Invoke();
+                    return;
+                }
+
+                MensagemErro = erro.Length > 0 ? erro : "Erro ao abrir caixa";
                 return;
             }
 

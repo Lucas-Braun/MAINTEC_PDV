@@ -220,20 +220,32 @@ public class ErpApiClient : IApiClient
             var response = await _httpClient.SendAsync(request);
 
             var json = await response.Content.ReadAsStringAsync();
-            var dto = JsonSerializer.Deserialize<CaixaStatusResponse>(json, _jsonOptions);
+            System.Diagnostics.Debug.WriteLine($"[PDV] ObterStatusCaixa HTTP {(int)response.StatusCode}: {json}");
 
-            if (dto == null)
-                return new ResultadoCaixaStatus { Sucesso = false, Erro = "Resposta invalida" };
+            // Parse manual para robustez — a API pode variar o formato
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            var sucesso = root.TryGetProperty("success", out var sp) && sp.GetBoolean();
+            var caixaAberto = root.TryGetProperty("caixa_aberto", out var ca) && ca.GetBoolean();
+            int? caixaCodigo = null;
+
+            if (root.TryGetProperty("caixa", out var caixaEl) && caixaEl.ValueKind == JsonValueKind.Object)
+            {
+                if (caixaEl.TryGetProperty("cai_in_codigo", out var codEl))
+                    caixaCodigo = codEl.GetInt32();
+            }
 
             return new ResultadoCaixaStatus
             {
-                Sucesso = dto.Success,
-                CaixaAberto = dto.CaixaAberto,
-                CaixaCodigo = dto.Caixa?.CaiInCodigo
+                Sucesso = sucesso,
+                CaixaAberto = caixaAberto,
+                CaixaCodigo = caixaCodigo
             };
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[PDV] ObterStatusCaixa ERRO: {ex.Message}");
             return new ResultadoCaixaStatus { Sucesso = false, Erro = ex.Message };
         }
     }
@@ -439,16 +451,18 @@ public class ErpApiClient : IApiClient
                 $"{_prefix}/produto/buscar?q={Uri.EscapeDataString(termo)}&limit={limite}");
             var response = await _httpClient.SendAsync(request);
 
-            if (!response.IsSuccessStatusCode) return new();
-
             var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+                throw new Exception($"API retornou {(int)response.StatusCode}: {json}");
+
             var dto = JsonSerializer.Deserialize<ProdutosPesquisaResponse>(json, _jsonOptions);
 
             return dto?.Produtos?.Select(MapProduto).ToList() ?? new();
         }
-        catch
+        catch (Exception ex)
         {
-            return new();
+            throw new Exception($"Erro ao pesquisar produtos: {ex.Message}");
         }
     }
 
@@ -532,9 +546,9 @@ public class ErpApiClient : IApiClient
     private static Produto MapProduto(ProdutoApiDTO dto) => new()
     {
         Id = dto.ProInCodigo,
-        CodigoBarras = dto.ProStCodigoBarras ?? string.Empty,
-        CodigoInterno = dto.ProStReferencia ?? string.Empty,
-        Descricao = dto.ProStDescricao,
+        CodigoBarras = dto.Ean ?? string.Empty,
+        CodigoInterno = string.IsNullOrWhiteSpace(dto.Codigo) ? dto.ProInCodigo.ToString() : dto.Codigo,
+        Descricao = dto.Descricao,
         UnidadeMedida = dto.Unidade,
         PrecoVenda = dto.Preco,
         EstoqueAtual = dto.Estoque,
@@ -544,6 +558,7 @@ public class ErpApiClient : IApiClient
         CSOSN = dto.Csosn ?? string.Empty,
         AliquotaICMS = dto.AliquotaIcms,
         CEST = dto.Cest ?? string.Empty,
+        FotoUrl = dto.FotoUrl,
         Ativo = true,
         UltimaAtualizacao = DateTime.Now
     };

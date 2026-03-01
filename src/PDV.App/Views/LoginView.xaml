@@ -178,10 +178,14 @@
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
-                        <TextBlock Text="{Binding MensagemErro}"
-                                   Foreground="{DynamicResource NegativeBrush}"
-                                   FontSize="13"
-                                   TextWrapping="Wrap"/>
+                        <TextBox Text="{Binding MensagemErro, Mode=OneWay}"
+                                 Foreground="{DynamicResource NegativeBrush}"
+                                 FontSize="13"
+                                 TextWrapping="Wrap"
+                                 IsReadOnly="True"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 Cursor="Arrow"/>
                     </Border>
 
                     <!-- Botao Entrar -->

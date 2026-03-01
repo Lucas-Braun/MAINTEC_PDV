@@ -76,13 +76,20 @@ public partial class MainViewModel : ObservableObject
         keepAlive?.Iniciar();
 
         // Verifica se ja tem caixa aberto via API
-        var apiClient = _services.GetRequiredService<IApiClient>();
-        var status = await apiClient.ObterStatusCaixa();
-
-        if (status.Sucesso && status.CaixaAberto)
+        try
         {
-            NavegarParaPDV();
-            return;
+            var apiClient = _services.GetRequiredService<IApiClient>();
+            var status = await apiClient.ObterStatusCaixa();
+
+            if (status.Sucesso && status.CaixaAberto)
+            {
+                NavegarParaPDV();
+                return;
+            }
+        }
+        catch
+        {
+            // Se falhar a verificacao, vai pra abertura normalmente
         }
 
         NavegarParaAberturaCaixa();

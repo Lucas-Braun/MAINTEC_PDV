@@ -16,12 +16,18 @@ public class OperadorService : IOperadorService
         _sessao = sessao;
     }
 
-    public async Task<Operador?> Autenticar(string login, string senha)
+    public async Task<ResultadoAutenticacao> Autenticar(string login, string senha)
     {
         var resultado = await _apiClient.Login(login, senha);
 
         if (!resultado.Sucesso || resultado.Token == null || resultado.Usuario == null)
-            return null;
+        {
+            return new ResultadoAutenticacao
+            {
+                Sucesso = false,
+                Erro = resultado.Erro ?? "Credenciais invalidas"
+            };
+        }
 
         // Popula sessao com dados do login
         _sessao.DefinirSessao(
@@ -58,7 +64,11 @@ public class OperadorService : IOperadorService
             Ativo = true
         };
 
-        return OperadorLogado;
+        return new ResultadoAutenticacao
+        {
+            Sucesso = true,
+            Operador = OperadorLogado
+        };
     }
 
     public void Logout()

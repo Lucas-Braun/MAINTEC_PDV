@@ -68,13 +68,16 @@
                 </TextBox>
 
                 <!-- Mensagem de erro -->
-                <TextBlock Text="{Binding MensagemErro}"
-                           Foreground="{DynamicResource NegativeBrush}"
-                           FontSize="13"
-                           TextWrapping="Wrap"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,16"
-                           Visibility="{Binding MensagemErro, Converter={StaticResource StringToVisibility}}"/>
+                <TextBox Text="{Binding MensagemErro, Mode=OneWay}"
+                         Foreground="{DynamicResource NegativeBrush}"
+                         FontSize="13"
+                         TextWrapping="Wrap"
+                         HorizontalAlignment="Center"
+                         IsReadOnly="True"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         Margin="0,0,0,16"
+                         Visibility="{Binding MensagemErro, Converter={StaticResource StringToVisibility}}"/>
 
                 <!-- Botao Abrir -->
                 <Button Content="ABRIR CAIXA"

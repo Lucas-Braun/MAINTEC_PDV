@@ -42,13 +42,15 @@ public partial class LoginViewModel : ObservableObject
             Processando = true;
             MensagemErro = string.Empty;
 
-            var operador = await _operadorService.Autenticar(Login, Senha);
+            var resultado = await _operadorService.Autenticar(Login, Senha);
 
-            if (operador == null)
+            if (!resultado.Sucesso)
             {
-                MensagemErro = "Login ou senha incorretos";
+                MensagemErro = resultado.Erro ?? "Login ou senha incorretos";
                 return;
             }
+
+            var operador = resultado.Operador!;
 
             if (!operador.Ativo)
             {

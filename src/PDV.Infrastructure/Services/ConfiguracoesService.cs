@@ -21,7 +21,7 @@ public class ConfiguracoesApp
     public string EnderecoEmpresa { get; set; } = "Rua Exemplo, 123 - Cidade/UF";
 
     // API
-    public string ApiUrl { get; set; } = "http://localhost:5000";
+    public string ApiUrl { get; set; } = "https://meintec.com.br";
 }
 
 public class ConfiguracoesService

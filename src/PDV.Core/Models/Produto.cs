@@ -20,6 +20,9 @@ public class Produto
     public decimal AliquotaICMS { get; set; }
     public string CEST { get; set; } = string.Empty;
 
+    // Imagem
+    public string? FotoUrl { get; set; }
+
     // Controle
     public bool Ativo { get; set; } = true;
     public DateTime UltimaAtualizacao { get; set; }
