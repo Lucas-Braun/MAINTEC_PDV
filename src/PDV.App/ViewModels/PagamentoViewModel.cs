@@ -198,6 +198,31 @@ public partial class PagamentoViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void PagamentoRapido(string? tipo)
+    {
+        if (string.IsNullOrEmpty(tipo)) return;
+
+        var forma = FormasPagamentoDisponiveis.FirstOrDefault(f =>
+            f.Nome.ToLower().Contains(tipo.ToLower()));
+        if (forma == null)
+        {
+            MensagemStatus = $"Forma '{tipo}' nao disponivel";
+            return;
+        }
+
+        FormaSelecionadaSessao = forma;
+        ValorPagamento = ValorRestante > 0 ? ValorRestante : ValorTotal;
+
+        if (PermiteTroco)
+            ValorRecebido = ValorPagamento;
+
+        AdicionarPagamento();
+
+        if (PodeConfirmar)
+            Confirmar();
+    }
+
+    [RelayCommand]
     private void Voltar()
     {
         Cancelado?.Invoke();

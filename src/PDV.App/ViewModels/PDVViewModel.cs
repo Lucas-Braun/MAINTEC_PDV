@@ -16,19 +16,22 @@ public partial class PDVViewModel : ObservableObject
     private readonly ISessaoService _sessao;
     private readonly IImpressoraService _impressoraService;
     private readonly ITEFService _tefService;
+    private readonly ICaixaService _caixaService;
 
     public PDVViewModel(
         IProdutoService produtoService,
         IApiClient apiClient,
         ISessaoService sessao,
         IImpressoraService impressoraService,
-        ITEFService tefService)
+        ITEFService tefService,
+        ICaixaService caixaService)
     {
         _produtoService = produtoService;
         _apiClient = apiClient;
         _sessao = sessao;
         _impressoraService = impressoraService;
         _tefService = tefService;
+        _caixaService = caixaService;
 
         VendaAtual = new Venda();
         Itens = new ObservableCollection<ItemVenda>();
@@ -221,6 +224,29 @@ public partial class PDVViewModel : ObservableObject
     [ObservableProperty]
     private bool _ajudaVisivel;
 
+    // Leitura X
+    [ObservableProperty]
+    private bool _leituraXVisivel;
+
+    [ObservableProperty] private decimal _lxTotalVendas;
+    [ObservableProperty] private decimal _lxDinheiro;
+    [ObservableProperty] private decimal _lxCredito;
+    [ObservableProperty] private decimal _lxDebito;
+    [ObservableProperty] private decimal _lxPix;
+    [ObservableProperty] private decimal _lxSangrias;
+    [ObservableProperty] private decimal _lxSuprimentos;
+    [ObservableProperty] private decimal _lxSaldo;
+    [ObservableProperty] private decimal _lxAbertura;
+    [ObservableProperty] private decimal _lxEstornos;
+
+    // Produtos recentes (favoritos)
+    [ObservableProperty]
+    private ObservableCollection<Produto> _produtosRecentes = new();
+
+    // Teclado numerico virtual
+    [ObservableProperty]
+    private bool _tecladoVisivel;
+
     // Totais exibidos na tela
     public decimal SubTotal => Itens.Sum(i => i.ValorTotal);
     public decimal DescontoTotal => VendaAtual.DescontoTotal;
@@ -335,6 +361,13 @@ public partial class PDVViewModel : ObservableObject
         try { System.Media.SystemSounds.Beep.Play(); } catch { }
 
         _ultimoProduto = produto;
+
+        // Track recentes (max 6, unique)
+        var existente = ProdutosRecentes.FirstOrDefault(p => p.Id == produto.Id);
+        if (existente != null) ProdutosRecentes.Remove(existente);
+        ProdutosRecentes.Insert(0, produto);
+        if (ProdutosRecentes.Count > 6) ProdutosRecentes.RemoveAt(ProdutosRecentes.Count - 1);
+
         MensagemStatus = $"{produto.Descricao} - {quantidade} x {produto.PrecoVenda:C2}";
         UltimoItemDescricao = produto.Descricao;
         UltimoItemPreco = (quantidade * produto.PrecoVenda).ToString("C2");
@@ -562,6 +595,116 @@ public partial class PDVViewModel : ObservableObject
     private void FecharAjuda()
     {
         AjudaVisivel = false;
+    }
+
+    // Leitura X
+    [RelayCommand]
+    private async Task AbrirLeituraX()
+    {
+        try
+        {
+            Processando = true;
+            MensagemStatus = "Carregando leitura X...";
+            var resumo = await _caixaService.ObterResumoCaixa();
+
+            if (resumo.Sucesso)
+            {
+                LxTotalVendas = resumo.TotalVendas;
+                LxDinheiro = resumo.TotalDinheiro;
+                LxCredito = resumo.TotalCartaoCredito;
+                LxDebito = resumo.TotalCartaoDebito;
+                LxPix = resumo.TotalPix;
+                LxSangrias = resumo.TotalSangrias;
+                LxSuprimentos = resumo.TotalSuprimentos;
+                LxSaldo = resumo.SaldoAtual;
+                LxAbertura = resumo.ValorAbertura;
+                LxEstornos = resumo.TotalEstornos;
+                LeituraXVisivel = true;
+                MensagemStatus = "Leitura X carregada";
+            }
+        }
+        catch (Exception ex)
+        {
+            MensagemStatus = $"Erro ao carregar leitura X: {ex.Message}";
+            MostrarToast("Erro ao carregar leitura X", "erro");
+        }
+        finally
+        {
+            Processando = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImprimirLeituraX()
+    {
+        try
+        {
+            var caixa = new Caixa
+            {
+                NumeroCaixa = _sessao.CaixaCodigo ?? 0,
+                NomeOperador = _sessao.Usuario?.Nome ?? "Operador",
+                DataAbertura = DateTime.Today,
+                ValorAbertura = LxAbertura,
+                TotalVendas = LxTotalVendas,
+                TotalDinheiro = LxDinheiro,
+                TotalCartaoCredito = LxCredito,
+                TotalCartaoDebito = LxDebito,
+                TotalPix = LxPix,
+                TotalSangria = LxSangrias,
+                TotalSuprimento = LxSuprimentos,
+                TotalCancelamentos = LxEstornos,
+            };
+            await _impressoraService.ImprimirFechamentoCaixa(caixa);
+            MostrarToast("Leitura X impressa", "sucesso");
+        }
+        catch
+        {
+            MostrarToast("Erro ao imprimir", "erro");
+        }
+    }
+
+    [RelayCommand]
+    private void FecharLeituraX()
+    {
+        LeituraXVisivel = false;
+    }
+
+    // Produtos recentes - adicionar ao clicar
+    [RelayCommand]
+    private void AdicionarProdutoRecente(Produto? produto)
+    {
+        if (produto == null) return;
+        AdicionarItemVenda(produto, 1);
+    }
+
+    // Teclado numerico virtual
+    [RelayCommand]
+    private void ToggleTeclado()
+    {
+        TecladoVisivel = !TecladoVisivel;
+    }
+
+    [RelayCommand]
+    private void Tecla(string? tecla)
+    {
+        if (tecla == null) return;
+
+        switch (tecla)
+        {
+            case "C":
+                CodigoBarrasInput = string.Empty;
+                break;
+            case "BS":
+                if (CodigoBarrasInput.Length > 0)
+                    CodigoBarrasInput = CodigoBarrasInput[..^1];
+                break;
+            case "OK":
+                _ = AdicionarProduto();
+                break;
+            default:
+                CodigoBarrasInput += tecla;
+                break;
+        }
     }
 
     [RelayCommand]

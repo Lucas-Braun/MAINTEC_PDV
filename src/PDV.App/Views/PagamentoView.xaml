@@ -24,6 +24,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
@@ -33,8 +34,50 @@
                            FontSize="28"
                            Margin="0,0,0,24"/>
 
+                <!-- Atalhos rapidos -->
+                <StackPanel Grid.Row="1" Margin="0,0,0,16">
+                    <TextBlock Text="PAGAMENTO RAPIDO (1 CLIQUE)"
+                               Style="{DynamicResource LabelPDV}"
+                               Margin="0,0,0,8"/>
+                    <WrapPanel>
+                        <Button Style="{DynamicResource BotaoPositive}"
+                                Command="{Binding PagamentoRapidoCommand}"
+                                CommandParameter="dinheiro"
+                                Height="44" Padding="16,0" Margin="0,0,8,8"
+                                FontSize="13" FontWeight="Bold">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE7BF;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="DINHEIRO" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{DynamicResource BotaoPDV}"
+                                Command="{Binding PagamentoRapidoCommand}"
+                                CommandParameter="pix"
+                                Height="44" Padding="16,0" Margin="0,0,8,8"
+                                FontSize="13" FontWeight="Bold">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="PIX" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{DynamicResource BotaoPDV}"
+                                Command="{Binding PagamentoRapidoCommand}"
+                                CommandParameter="debito"
+                                Height="44" Padding="16,0" Margin="0,0,8,8"
+                                FontSize="13" FontWeight="Bold">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8C7;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="DEBITO" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </WrapPanel>
+                </StackPanel>
+
                 <!-- Forma de pagamento (dinamica da API) -->
-                <StackPanel Grid.Row="1" Margin="0,0,0,20">
+                <StackPanel Grid.Row="2" Margin="0,0,0,20">
                     <TextBlock Text="FORMA DE PAGAMENTO"
                                Style="{DynamicResource LabelPDV}"
                                Margin="0,0,0,8"/>
@@ -66,7 +109,7 @@
                 </StackPanel>
 
                 <!-- Valor do pagamento -->
-                <Grid Grid.Row="2" Margin="0,0,0,16">
+                <Grid Grid.Row="3" Margin="0,0,0,16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
@@ -99,7 +142,7 @@
                 </Grid>
 
                 <!-- Parcelas (credito) -->
-                <StackPanel Grid.Row="3" Margin="0,0,0,16"
+                <StackPanel Grid.Row="4" Margin="0,0,0,16"
                             x:Name="PnlParcelas">
                     <TextBlock Text="PARCELAS"
                                Style="{DynamicResource LabelPDV}"/>
@@ -110,7 +153,7 @@
                 </StackPanel>
 
                 <!-- Troco -->
-                <Border Grid.Row="4" VerticalAlignment="Top"
+                <Border Grid.Row="5" VerticalAlignment="Top"
                         Background="{DynamicResource SurfaceLightBrush}"
                         CornerRadius="10" Padding="20,16" Margin="0,10,0,0"
                         BorderBrush="{DynamicResource CriticalBrush}"

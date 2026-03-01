@@ -133,6 +133,8 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="60" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
@@ -207,8 +209,89 @@
                         </Grid>
                     </Border>
 
+                    <!-- Produtos recentes -->
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding ProdutosRecentes}"
+                                  Margin="8,4,8,0">
+                        <ItemsControl.Style>
+                            <Style TargetType="ItemsControl">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ProdutosRecentes.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ItemsControl.Style>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding DataContext.AdicionarProdutoRecenteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Cursor="Hand" Margin="0,0,4,4"
+                                        ToolTip="{Binding Descricao}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="bg" Background="{DynamicResource SurfaceLightBrush}"
+                                                    CornerRadius="6" Padding="10,4">
+                                                <TextBlock Text="{Binding Descricao}" FontSize="11"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           MaxWidth="120" TextTrimming="CharacterEllipsis"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="bg" Property="Background" Value="{DynamicResource PrimarySubtleBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Teclado numerico virtual -->
+                    <Border Grid.Row="2" Background="{DynamicResource SurfaceLightBrush}"
+                            Padding="8,6" Margin="0,0,0,0">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding TecladoVisivel}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="1" Command="{Binding TeclaCommand}" CommandParameter="1" Style="{DynamicResource BotaoGhost}" Height="38" Margin="2,0" FontSize="16" FontWeight="Bold"/>
+                            <Button Grid.Column="1" Content="2" Command="{Binding TeclaCommand}" CommandParameter="2" Style="{DynamicResource BotaoGhost}" Height="38" Margin="2,0" FontSize="16" FontWeight="Bold"/>
+                            <Button Grid.Column="2" Content="3" Command="{Binding TeclaCommand}" CommandParameter="3" Style="{DynamicResource BotaoGhost}" Height="38" Margin="2,0" FontSize="16" FontWeight="Bold"/>
+                            <Button Grid.Column="3" Content="4" Command="{Binding TeclaCommand}" CommandParameter="4" Style="{DynamicResource BotaoGhost}" Height="38" Margin="2,0" FontSize="16" FontWeight="Bold"/>
+                            <Button Grid.Column="4" Content="5" Command="{Binding TeclaCommand}" CommandParameter="5" Style="{DynamicResource BotaoGhost}" Height="38" Margin="2,0" FontSize="16" FontWeight="Bold"/>
+                            <Button Grid.Column="5" Content="6" Command="{Binding TeclaCommand}" CommandParameter="6" Style="{DynamicResource BotaoGhost}" Height="38" Margin="2,0" FontSize="16" FontWeight="Bold"/>
+                            <Button Grid.Column="6" Content="7" Command="{Binding TeclaCommand}" CommandParameter="7" Style="{DynamicResource BotaoGhost}" Height="38" Margin="2,0" FontSize="16" FontWeight="Bold"/>
+                            <Button Grid.Column="7" Content="8" Command="{Binding TeclaCommand}" CommandParameter="8" Style="{DynamicResource BotaoGhost}" Height="38" Margin="2,0" FontSize="16" FontWeight="Bold"/>
+                            <Button Grid.Column="8" Content="9" Command="{Binding TeclaCommand}" CommandParameter="9" Style="{DynamicResource BotaoGhost}" Height="38" Margin="2,0" FontSize="16" FontWeight="Bold"/>
+                            <Button Grid.Column="9" Content="0" Command="{Binding TeclaCommand}" CommandParameter="0" Style="{DynamicResource BotaoGhost}" Height="38" Margin="2,0" FontSize="16" FontWeight="Bold"/>
+                            <Button Grid.Column="10" Content="&#xE750;" FontFamily="Segoe MDL2 Assets" Command="{Binding TeclaCommand}" CommandParameter="BS" Style="{DynamicResource BotaoGhost}" Height="38" Margin="2,0" FontSize="14" ToolTip="Apagar"/>
+                            <Button Grid.Column="11" Content="OK" Command="{Binding TeclaCommand}" CommandParameter="OK" Style="{DynamicResource BotaoPositive}" Height="38" Margin="2,0" FontSize="13" FontWeight="Bold"/>
+                        </Grid>
+                    </Border>
+
                     <!-- Grid de itens da venda -->
-                    <Grid Grid.Row="1">
+                    <Grid Grid.Row="3">
                         <DataGrid x:Name="GridItens"
                                   ItemsSource="{Binding Itens}"
                                   SelectedItem="{Binding ItemSelecionado}"
@@ -569,6 +652,18 @@
                                 </Button>
 
                                 <Button Style="{DynamicResource BotaoFuncao}"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Command="{Binding AbrirLeituraXCommand}"
+                                        ToolTip="Leitura X - Resumo do caixa sem fechar">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE9D5;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="18" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="LEITURA X" FontSize="11" FontWeight="Bold"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{DynamicResource BotaoFuncao}"
                                         Background="{DynamicResource NeutralBrush}"
                                         Command="{Binding FecharCaixaCommand}"
                                         ToolTip="Fechar o caixa e gerar relatorio (F12)">
@@ -614,6 +709,18 @@
                                         <TextBlock Text="LOGOUT" FontSize="11" FontWeight="Bold"
                                                    HorizontalAlignment="Center"/>
                                         <TextBlock Text="F11" FontSize="9" Opacity="0.6"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{DynamicResource BotaoFuncao}"
+                                        Background="{DynamicResource NeutralBrush}"
+                                        Command="{Binding ToggleTecladoCommand}"
+                                        ToolTip="Mostrar/ocultar teclado numerico">
+                                    <StackPanel>
+                                        <TextBlock Text="&#xE765;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="18" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="TECLADO" FontSize="11" FontWeight="Bold"
                                                    HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
@@ -700,6 +807,152 @@
                 </StackPanel>
             </Grid>
         </Border>
+
+        <!-- ============================================= -->
+        <!-- OVERLAY LEITURA X                             -->
+        <!-- ============================================= -->
+        <Grid Grid.RowSpan="3" Panel.ZIndex="85">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding LeituraXVisivel}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Border Background="#CC000000"/>
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="16" Padding="40,30"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    MinWidth="480"
+                    Effect="{DynamicResource CardShadow}">
+                <StackPanel>
+                    <TextBlock Text="&#xE9D5;" FontFamily="Segoe MDL2 Assets"
+                               FontSize="28" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource PrimaryBrush}"
+                               Margin="0,0,0,4"/>
+                    <TextBlock Text="LEITURA X"
+                               FontSize="22" FontWeight="Bold"
+                               Foreground="{DynamicResource PrimaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,4"/>
+                    <TextBlock Text="{Binding DataHoraAtual}"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,16"/>
+
+                    <!-- Resumo -->
+                    <Border Background="{DynamicResource SurfaceLightBrush}"
+                            CornerRadius="8" Padding="16,10" Margin="0,0,0,4">
+                        <Grid>
+                            <TextBlock Text="Valor Abertura" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13"/>
+                            <TextBlock Text="{Binding LxAbertura, StringFormat=C2}" HorizontalAlignment="Right"
+                                       Foreground="{DynamicResource TextBrush}" FontSize="13" FontWeight="Bold"/>
+                        </Grid>
+                    </Border>
+                    <Border Background="{DynamicResource SurfaceLightBrush}"
+                            CornerRadius="8" Padding="16,10" Margin="0,0,0,4">
+                        <Grid>
+                            <TextBlock Text="Total Vendas" Foreground="{DynamicResource PositiveBrush}" FontSize="13"/>
+                            <TextBlock Text="{Binding LxTotalVendas, StringFormat=C2}" HorizontalAlignment="Right"
+                                       Foreground="{DynamicResource PositiveBrush}" FontSize="14" FontWeight="Bold"/>
+                        </Grid>
+                    </Border>
+
+                    <Separator Background="{DynamicResource SeparatorBrush}" Margin="0,8"/>
+
+                    <Border Background="{DynamicResource SurfaceLightBrush}"
+                            CornerRadius="8" Padding="16,8" Margin="0,0,0,3">
+                        <Grid>
+                            <TextBlock Text="Dinheiro" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
+                            <TextBlock Text="{Binding LxDinheiro, StringFormat=C2}" HorizontalAlignment="Right"
+                                       Foreground="{DynamicResource TextBrush}" FontSize="12" FontWeight="Bold"/>
+                        </Grid>
+                    </Border>
+                    <Border Background="{DynamicResource SurfaceLightBrush}"
+                            CornerRadius="8" Padding="16,8" Margin="0,0,0,3">
+                        <Grid>
+                            <TextBlock Text="Cartao Credito" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
+                            <TextBlock Text="{Binding LxCredito, StringFormat=C2}" HorizontalAlignment="Right"
+                                       Foreground="{DynamicResource TextBrush}" FontSize="12" FontWeight="Bold"/>
+                        </Grid>
+                    </Border>
+                    <Border Background="{DynamicResource SurfaceLightBrush}"
+                            CornerRadius="8" Padding="16,8" Margin="0,0,0,3">
+                        <Grid>
+                            <TextBlock Text="Cartao Debito" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
+                            <TextBlock Text="{Binding LxDebito, StringFormat=C2}" HorizontalAlignment="Right"
+                                       Foreground="{DynamicResource TextBrush}" FontSize="12" FontWeight="Bold"/>
+                        </Grid>
+                    </Border>
+                    <Border Background="{DynamicResource SurfaceLightBrush}"
+                            CornerRadius="8" Padding="16,8" Margin="0,0,0,3">
+                        <Grid>
+                            <TextBlock Text="PIX" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
+                            <TextBlock Text="{Binding LxPix, StringFormat=C2}" HorizontalAlignment="Right"
+                                       Foreground="{DynamicResource TextBrush}" FontSize="12" FontWeight="Bold"/>
+                        </Grid>
+                    </Border>
+
+                    <Separator Background="{DynamicResource SeparatorBrush}" Margin="0,8"/>
+
+                    <Border Background="{DynamicResource SurfaceLightBrush}"
+                            CornerRadius="8" Padding="16,8" Margin="0,0,0,3">
+                        <Grid>
+                            <TextBlock Text="(-) Sangrias" Foreground="{DynamicResource NegativeBrush}" FontSize="12"/>
+                            <TextBlock Text="{Binding LxSangrias, StringFormat=C2}" HorizontalAlignment="Right"
+                                       Foreground="{DynamicResource NegativeBrush}" FontSize="12" FontWeight="Bold"/>
+                        </Grid>
+                    </Border>
+                    <Border Background="{DynamicResource SurfaceLightBrush}"
+                            CornerRadius="8" Padding="16,8" Margin="0,0,0,3">
+                        <Grid>
+                            <TextBlock Text="(+) Suprimentos" Foreground="{DynamicResource PositiveBrush}" FontSize="12"/>
+                            <TextBlock Text="{Binding LxSuprimentos, StringFormat=C2}" HorizontalAlignment="Right"
+                                       Foreground="{DynamicResource PositiveBrush}" FontSize="12" FontWeight="Bold"/>
+                        </Grid>
+                    </Border>
+                    <Border Background="{DynamicResource SurfaceLightBrush}"
+                            CornerRadius="8" Padding="16,8" Margin="0,0,0,3">
+                        <Grid>
+                            <TextBlock Text="(-) Estornos" Foreground="{DynamicResource NegativeBrush}" FontSize="12"/>
+                            <TextBlock Text="{Binding LxEstornos, StringFormat=C2}" HorizontalAlignment="Right"
+                                       Foreground="{DynamicResource NegativeBrush}" FontSize="12" FontWeight="Bold"/>
+                        </Grid>
+                    </Border>
+
+                    <Separator Background="{DynamicResource SeparatorBrush}" Margin="0,8"/>
+
+                    <Border Background="{DynamicResource PrimarySubtleBrush}"
+                            CornerRadius="8" Padding="16,12" Margin="0,0,0,16">
+                        <Grid>
+                            <TextBlock Text="SALDO EM CAIXA" Foreground="{DynamicResource PrimaryBrush}"
+                                       FontSize="14" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding LxSaldo, StringFormat=C2}" HorizontalAlignment="Right"
+                                       Foreground="{DynamicResource PrimaryBrush}" FontSize="20" FontWeight="ExtraBold"/>
+                        </Grid>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="IMPRIMIR"
+                                Command="{Binding ImprimirLeituraXCommand}"
+                                Style="{DynamicResource BotaoPDV}"
+                                FontSize="14" Height="40"
+                                Padding="24,0"
+                                Margin="0,0,12,0"/>
+                        <Button Content="FECHAR"
+                                Command="{Binding FecharLeituraXCommand}"
+                                Style="{DynamicResource BotaoNeutral}"
+                                FontSize="14" Height="40"
+                                Padding="24,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
 
         <!-- ============================================= -->
         <!-- OVERLAY DE CONFIRMACAO CANCELAMENTO           -->
