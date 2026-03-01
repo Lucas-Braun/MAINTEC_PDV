@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PDV.Core.Interfaces;
+using PDV.Core.Models;
 
 namespace PDV.App.ViewModels;
 
@@ -8,11 +9,13 @@ public partial class FechamentoCaixaViewModel : ObservableObject
 {
     private readonly ICaixaService _caixaService;
     private readonly IImpressoraService _impressoraService;
+    private readonly ISessaoService _sessao;
 
-    public FechamentoCaixaViewModel(ICaixaService caixaService, IImpressoraService impressoraService)
+    public FechamentoCaixaViewModel(ICaixaService caixaService, IImpressoraService impressoraService, ISessaoService sessao)
     {
         _caixaService = caixaService;
         _impressoraService = impressoraService;
+        _sessao = sessao;
     }
 
     // Callbacks
@@ -117,6 +120,33 @@ public partial class FechamentoCaixaViewModel : ObservableObject
             {
                 MensagemStatus = resultado.Erro ?? "Erro ao fechar caixa";
                 return;
+            }
+
+            // Imprime relatorio de fechamento na termica
+            try
+            {
+                var caixa = new Caixa
+                {
+                    NumeroCaixa = _sessao.CaixaCodigo ?? 0,
+                    NomeOperador = _sessao.Usuario?.Nome ?? "Operador",
+                    DataAbertura = DateTime.Today,
+                    ValorAbertura = ValorAbertura,
+                    TotalVendas = TotalVendas,
+                    TotalDinheiro = TotalDinheiro,
+                    TotalCartaoCredito = TotalCartaoCredito,
+                    TotalCartaoDebito = TotalCartaoDebito,
+                    TotalPix = TotalPix,
+                    TotalSangria = TotalSangrias,
+                    TotalSuprimento = TotalSuprimentos,
+                    TotalCancelamentos = TotalEstornos,
+                    ValorFechamento = ValorFechamento
+                };
+                MensagemStatus = "Imprimindo relatorio...";
+                await _impressoraService.ImprimirFechamentoCaixa(caixa);
+            }
+            catch
+            {
+                // Impressora indisponivel - nao impede o fechamento
             }
 
             MensagemStatus = "Caixa fechado com sucesso!";

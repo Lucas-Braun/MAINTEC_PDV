@@ -190,6 +190,37 @@ public partial class PDVViewModel : ObservableObject
             : $"{(int)elapsed.TotalMinutes}m {elapsed.Seconds}s";
     }
 
+    // Toast notifications
+    [ObservableProperty]
+    private bool _toastVisivel;
+
+    [ObservableProperty]
+    private string _toastMensagem = string.Empty;
+
+    [ObservableProperty]
+    private string _toastTipo = "info";
+
+    private DispatcherTimer? _timerToast;
+
+    public void MostrarToast(string mensagem, string tipo = "info")
+    {
+        ToastMensagem = mensagem;
+        ToastTipo = tipo;
+        ToastVisivel = true;
+
+        if (_timerToast == null)
+        {
+            _timerToast = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+            _timerToast.Tick += (_, _) => { ToastVisivel = false; _timerToast.Stop(); };
+        }
+        _timerToast.Stop();
+        _timerToast.Start();
+    }
+
+    // Help overlay
+    [ObservableProperty]
+    private bool _ajudaVisivel;
+
     // Totais exibidos na tela
     public decimal SubTotal => Itens.Sum(i => i.ValorTotal);
     public decimal DescontoTotal => VendaAtual.DescontoTotal;
@@ -235,6 +266,7 @@ public partial class PDVViewModel : ObservableObject
             if (produto == null)
             {
                 MensagemStatus = $"Produto nao encontrado: {codigo}";
+                MostrarToast($"Produto nao encontrado: {codigo}", "erro");
                 return;
             }
 
@@ -328,6 +360,7 @@ public partial class PDVViewModel : ObservableObject
             VendaEmAndamento = false;
 
         MensagemStatus = "Item removido";
+        MostrarToast("Item removido", "info");
     }
 
     [RelayCommand]
@@ -462,8 +495,15 @@ public partial class PDVViewModel : ObservableObject
                 }
             }
 
-            // 6. Navega para tela de comprovante
+            // 6. Abre gaveta se pagamento em dinheiro
+            if (pagamentos.Any(p => p.FormaPagamento == FormaPagamento.Dinheiro))
+            {
+                try { await _impressoraService.AbrirGaveta(); } catch { }
+            }
+
+            // 7. Navega para tela de comprovante
             MensagemStatus = $"Venda #{resultado.PedidoCodigo} finalizada! Total: {resultado.ValorVenda:C2}";
+            MostrarToast($"Venda #{resultado.PedidoCodigo} finalizada!", "sucesso");
             VendaFinalizada?.Invoke(VendaAtual);
         }
         catch (Exception ex)
@@ -491,6 +531,7 @@ public partial class PDVViewModel : ObservableObject
         ConfirmandoCancelamento = false;
         NovaVenda();
         MensagemStatus = "Venda cancelada";
+        MostrarToast("Venda cancelada", "info");
     }
 
     [RelayCommand]
@@ -509,6 +550,18 @@ public partial class PDVViewModel : ObservableObject
             return;
         }
         AdicionarItemVenda(_ultimoProduto, 1);
+    }
+
+    [RelayCommand]
+    private void MostrarAjuda()
+    {
+        AjudaVisivel = !AjudaVisivel;
+    }
+
+    [RelayCommand]
+    private void FecharAjuda()
+    {
+        AjudaVisivel = false;
     }
 
     [RelayCommand]
@@ -594,6 +647,7 @@ public partial class PDVViewModel : ObservableObject
                 Itens.Insert(index, item);
             }
             MensagemStatus = $"Desconto de {perc:N2}% aplicado em {ItemSelecionado.DescricaoProduto}";
+            MostrarToast($"Desconto de {perc:N2}% aplicado", "sucesso");
         }
         else
         {
@@ -607,6 +661,7 @@ public partial class PDVViewModel : ObservableObject
                 Itens.Insert(i, item);
             }
             MensagemStatus = $"Desconto de {perc:N2}% aplicado em todos os itens";
+            MostrarToast($"Desconto de {perc:N2}% aplicado em todos", "sucesso");
         }
 
         VendaAtual.Itens = Itens.ToList();
