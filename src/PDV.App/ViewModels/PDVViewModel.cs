@@ -4,6 +4,7 @@ using PDV.Core.Enums;
 using PDV.Core.Models;
 using PDV.Core.Interfaces;
 using System.Collections.ObjectModel;
+using System.Net.Http;
 using System.Windows.Threading;
 
 namespace PDV.App.ViewModels;
@@ -137,6 +138,13 @@ public partial class PDVViewModel : ObservableObject
     [ObservableProperty]
     private bool _confirmandoCancelamento;
 
+    // Desconto F8
+    [ObservableProperty]
+    private bool _descontoOverlayVisivel;
+
+    [ObservableProperty]
+    private string _descontoPercentualInput = string.Empty;
+
     // Totais exibidos na tela
     public decimal SubTotal => Itens.Sum(i => i.ValorTotal);
     public decimal DescontoTotal => VendaAtual.DescontoTotal;
@@ -225,6 +233,9 @@ public partial class PDVViewModel : ObservableObject
 
         VendaAtual.Itens = Itens.ToList();
         VendaEmAndamento = true;
+
+        // Beep ao adicionar produto
+        try { System.Media.SystemSounds.Beep.Play(); } catch { }
 
         MensagemStatus = $"{produto.Descricao} - {quantidade} x {produto.PrecoVenda:C2}";
         UltimoItemDescricao = produto.Descricao;
@@ -319,10 +330,23 @@ public partial class PDVViewModel : ObservableObject
             var idempotencyKey = Guid.NewGuid().ToString();
 
             // 3. Finaliza venda na API (servidor faz NFC-e, preco, estoque)
+            // Com retry automatico em caso de falha de rede
             MensagemStatus = "Finalizando venda...";
-            var resultado = await _apiClient.FinalizarVendaDireta(
-                itensApi, parcelasApi,
-                VendaAtual.ClienteCpfCnpj, troco, idempotencyKey);
+            ResultadoVenda resultado;
+            try
+            {
+                resultado = await _apiClient.FinalizarVendaDireta(
+                    itensApi, parcelasApi,
+                    VendaAtual.ClienteCpfCnpj, troco, idempotencyKey);
+            }
+            catch (HttpRequestException)
+            {
+                MensagemStatus = "Falha na conexao. Tentando novamente...";
+                await Task.Delay(2000);
+                resultado = await _apiClient.FinalizarVendaDireta(
+                    itensApi, parcelasApi,
+                    VendaAtual.ClienteCpfCnpj, troco, idempotencyKey);
+            }
 
             if (!resultado.Sucesso)
             {
@@ -392,6 +416,68 @@ public partial class PDVViewModel : ObservableObject
     {
         ConfirmandoCancelamento = false;
         MensagemStatus = "Cancelamento desfeito";
+    }
+
+    [RelayCommand]
+    private void AbrirDesconto()
+    {
+        if (ItemSelecionado == null && !Itens.Any())
+        {
+            MensagemStatus = "Nenhum item para aplicar desconto";
+            return;
+        }
+        DescontoPercentualInput = string.Empty;
+        DescontoOverlayVisivel = true;
+    }
+
+    [RelayCommand]
+    private void FecharDesconto()
+    {
+        DescontoOverlayVisivel = false;
+    }
+
+    [RelayCommand]
+    private void AplicarDesconto()
+    {
+        if (!decimal.TryParse(DescontoPercentualInput?.Replace(",", "."),
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var perc) || perc <= 0 || perc > 100)
+        {
+            MensagemStatus = "Informe um percentual valido (0,01 a 100)";
+            return;
+        }
+
+        if (ItemSelecionado != null)
+        {
+            // Desconto no item selecionado
+            ItemSelecionado.DescontoPercentual = perc;
+            ItemSelecionado.DescontoValor = Math.Round(ItemSelecionado.PrecoUnitario * ItemSelecionado.Quantidade * perc / 100m, 2);
+            var index = Itens.IndexOf(ItemSelecionado);
+            if (index >= 0)
+            {
+                var item = ItemSelecionado;
+                Itens.RemoveAt(index);
+                Itens.Insert(index, item);
+            }
+            MensagemStatus = $"Desconto de {perc:N2}% aplicado em {ItemSelecionado.DescricaoProduto}";
+        }
+        else
+        {
+            // Desconto em todos os itens
+            for (int i = 0; i < Itens.Count; i++)
+            {
+                var item = Itens[i];
+                item.DescontoPercentual = perc;
+                item.DescontoValor = Math.Round(item.PrecoUnitario * item.Quantidade * perc / 100m, 2);
+                Itens.RemoveAt(i);
+                Itens.Insert(i, item);
+            }
+            MensagemStatus = $"Desconto de {perc:N2}% aplicado em todos os itens";
+        }
+
+        VendaAtual.Itens = Itens.ToList();
+        AtualizarTotais();
+        DescontoOverlayVisivel = false;
     }
 
     [RelayCommand]

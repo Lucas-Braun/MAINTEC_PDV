@@ -409,7 +409,11 @@ public class ErpApiClient : IApiClient
                 TotalSangrias = dto.Totais?.Sangrias ?? 0,
                 TotalSuprimentos = dto.Totais?.Suprimentos ?? 0,
                 TotalEstornos = dto.Totais?.Estornos ?? 0,
-                ValorAbertura = dto.Caixa?.CaiReVlAbertura ?? 0
+                ValorAbertura = dto.Caixa?.CaiReVlAbertura ?? 0,
+                TotalDinheiro = dto.Totais?.Dinheiro ?? 0,
+                TotalCartaoCredito = dto.Totais?.CartaoCredito ?? 0,
+                TotalCartaoDebito = dto.Totais?.CartaoDebito ?? 0,
+                TotalPix = dto.Totais?.Pix ?? 0
             };
         }
         catch (Exception ex)
@@ -524,13 +528,15 @@ public class ErpApiClient : IApiClient
 
     // ======================== VENDA - CONSULTA ========================
 
-    public async Task<List<VendaResumo>> ListarVendas(DateTime dataInicio, DateTime dataFim, string? status, int limite = 50)
+    public async Task<List<VendaResumo>> ListarVendas(DateTime dataInicio, DateTime dataFim, string? status, string? nf = null, int limite = 50)
     {
         try
         {
             var url = $"{_prefix}/vendas?data_inicio={dataInicio:yyyy-MM-dd}&data_fim={dataFim:yyyy-MM-dd}&limit={limite}";
             if (!string.IsNullOrEmpty(status))
                 url += $"&status={Uri.EscapeDataString(status)}";
+            if (!string.IsNullOrEmpty(nf))
+                url += $"&nf={Uri.EscapeDataString(nf)}";
 
             using var request = CriarRequest(HttpMethod.Get, url);
             var response = await _httpClient.SendAsync(request);
@@ -613,6 +619,30 @@ public class ErpApiClient : IApiClient
         catch (Exception ex)
         {
             throw new Exception($"Erro ao obter detalhe da venda: {ex.Message}");
+        }
+    }
+
+    public async Task<ResultadoOperacao> EstornarVenda(int nfInCodigo, string motivo)
+    {
+        try
+        {
+            var body = new { motivo };
+            using var request = CriarRequest(HttpMethod.Post, $"{_prefix}/venda/{nfInCodigo}/estornar", body);
+            var response = await _httpClient.SendAsync(request);
+
+            var json = await response.Content.ReadAsStringAsync();
+            var dto = JsonSerializer.Deserialize<ApiResponse>(json, _jsonOptions);
+
+            return new ResultadoOperacao
+            {
+                Sucesso = dto?.Success ?? false,
+                Mensagem = dto?.Message,
+                Erro = dto?.Error
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ResultadoOperacao { Sucesso = false, Erro = ex.Message };
         }
     }
 

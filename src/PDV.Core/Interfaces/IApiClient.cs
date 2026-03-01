@@ -31,8 +31,9 @@ public interface IApiClient
         string? cpfNota, decimal? troco, string idempotencyKey);
 
     // Venda - Consulta
-    Task<List<VendaResumo>> ListarVendas(DateTime dataInicio, DateTime dataFim, string? status, int limite = 50);
+    Task<List<VendaResumo>> ListarVendas(DateTime dataInicio, DateTime dataFim, string? status, string? nf = null, int limite = 50);
     Task<VendaDetalhe?> ObterVendaDetalhe(int nfInCodigo);
+    Task<ResultadoOperacao> EstornarVenda(int nfInCodigo, string motivo);
 
     // Cliente
     Task<List<Cliente>> BuscarClientes(string termo);
@@ -99,6 +100,10 @@ public class ResultadoResumoCaixa
     public decimal TotalSuprimentos { get; set; }
     public decimal TotalEstornos { get; set; }
     public decimal ValorAbertura { get; set; }
+    public decimal TotalDinheiro { get; set; }
+    public decimal TotalCartaoCredito { get; set; }
+    public decimal TotalCartaoDebito { get; set; }
+    public decimal TotalPix { get; set; }
     public string? Erro { get; set; }
 }
 

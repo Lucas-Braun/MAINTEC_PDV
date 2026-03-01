@@ -137,7 +137,7 @@
                     FontSize="14" Height="48"
                     Margin="0,0,10,0"/>
 
-            <Button Grid.Column="2" Content="SELECIONAR"
+            <Button Grid.Column="2" Content="SELECIONAR (ENTER)"
                     Command="{Binding SelecionarCommand}"
                     Style="{DynamicResource BotaoPositive}"
                     FontSize="14" Height="48"/>

@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PDV.Core.Helpers;
 using PDV.Core.Interfaces;
 using PDV.Core.Models;
 using System.Collections.ObjectModel;
@@ -99,6 +100,17 @@ public partial class ConsultaClienteViewModel : ObservableObject
         {
             MensagemErro = "Informe o nome do cliente";
             return;
+        }
+
+        // Valida CPF/CNPJ se informado
+        if (!string.IsNullOrWhiteSpace(CpfCnpj))
+        {
+            var digitos = CpfCnpjHelper.ApenasDigitos(CpfCnpj);
+            if (digitos.Length > 0 && !CpfCnpjHelper.Validar(digitos))
+            {
+                MensagemErro = "CPF/CNPJ invalido";
+                return;
+            }
         }
 
         try

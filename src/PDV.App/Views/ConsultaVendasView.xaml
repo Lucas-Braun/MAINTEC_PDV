@@ -260,7 +260,7 @@
         </Border>
 
         <!-- ============================================= -->
-        <!-- RODAPE - MENSAGENS + VOLTAR                   -->
+        <!-- RODAPE - MENSAGENS + BOTOES                   -->
         <!-- ============================================= -->
         <Grid Grid.Row="5">
             <Grid.ColumnDefinitions>
@@ -280,6 +280,10 @@
                          BorderThickness="0" Background="Transparent"
                          TextWrapping="Wrap"
                          Visibility="{Binding MensagemErro, Converter={StaticResource StringToVisibility}}"/>
+                <TextBlock Text="{Binding MensagemSucesso}"
+                           Foreground="{DynamicResource PositiveBrush}"
+                           FontSize="13"
+                           Visibility="{Binding MensagemSucesso, Converter={StaticResource StringToVisibility}}"/>
                 <TextBlock FontSize="12"
                            Foreground="{DynamicResource TextSecondaryBrush}">
                     <TextBlock.Style>
@@ -297,10 +301,85 @@
                 </TextBlock>
             </StackPanel>
 
+            <Button Grid.Column="1" Content="ESTORNAR VENDA"
+                    Command="{Binding IniciarEstornoCommand}"
+                    Style="{DynamicResource BotaoNegative}"
+                    FontSize="14" Height="48"
+                    Margin="0,0,10,0"/>
+
             <Button Grid.Column="2" Content="VOLTAR (ESC)"
                     Command="{Binding VoltarCommand}"
                     Style="{DynamicResource BotaoNeutral}"
                     FontSize="14" Height="48"/>
+        </Grid>
+
+        <!-- ============================================= -->
+        <!-- OVERLAY DE ESTORNO                            -->
+        <!-- ============================================= -->
+        <Grid Grid.RowSpan="6" Panel.ZIndex="80">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ConfirmandoEstorno}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Border Background="#88000000"/>
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="16"
+                    Padding="40,30"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    MinWidth="450"
+                    Effect="{DynamicResource CardShadow}">
+                <StackPanel>
+                    <TextBlock Text="ESTORNAR VENDA"
+                               FontSize="22" FontWeight="Bold"
+                               Foreground="{DynamicResource NegativeBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,4"/>
+                    <TextBlock FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,16">
+                        <Run Text="NF: "/>
+                        <Run Text="{Binding VendaSelecionada.NfNumero, Mode=OneWay, FallbackValue=-}"/>
+                        <Run Text=" | Total: "/>
+                        <Run Text="{Binding VendaSelecionada.Total, Mode=OneWay, StringFormat=C2, FallbackValue=-}"/>
+                    </TextBlock>
+
+                    <TextBlock Text="Motivo do estorno:"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="13" Margin="0,0,0,6"/>
+                    <TextBox Text="{Binding MotivoEstorno, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource TextBoxPDV}"
+                             FontSize="14" Padding="10,8"
+                             Margin="0,0,0,20"
+                             x:Name="TxtMotivo">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Return" Command="{Binding ConfirmarEstornoCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
+
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center">
+                        <Button Content="CONFIRMAR ESTORNO"
+                                Command="{Binding ConfirmarEstornoCommand}"
+                                Style="{DynamicResource BotaoNegative}"
+                                FontSize="14" Height="44"
+                                Padding="24,0"
+                                Margin="0,0,12,0"/>
+                        <Button Content="CANCELAR"
+                                Command="{Binding CancelarEstornoCommand}"
+                                Style="{DynamicResource BotaoNeutral}"
+                                FontSize="14" Height="44"
+                                Padding="24,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
         </Grid>
     </Grid>
 

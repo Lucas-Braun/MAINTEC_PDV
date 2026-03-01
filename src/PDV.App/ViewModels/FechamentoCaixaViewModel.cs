@@ -44,6 +44,23 @@ public partial class FechamentoCaixaViewModel : ObservableObject
     [ObservableProperty]
     private decimal _valorAbertura;
 
+    // Por forma de pagamento
+    [ObservableProperty]
+    private decimal _totalDinheiro;
+
+    [ObservableProperty]
+    private decimal _totalCartaoCredito;
+
+    [ObservableProperty]
+    private decimal _totalCartaoDebito;
+
+    [ObservableProperty]
+    private decimal _totalPix;
+
+    // Alias singular para bindings da View
+    public decimal TotalSangria => TotalSangrias;
+    public decimal TotalSuprimento => TotalSuprimentos;
+
     [ObservableProperty]
     private decimal _saldoEsperado;
 
@@ -69,7 +86,15 @@ public partial class FechamentoCaixaViewModel : ObservableObject
                 TotalEstornos = resumo.TotalEstornos;
                 ValorAbertura = resumo.ValorAbertura;
                 SaldoEsperado = resumo.SaldoAtual;
+
+                TotalDinheiro = resumo.TotalDinheiro;
+                TotalCartaoCredito = resumo.TotalCartaoCredito;
+                TotalCartaoDebito = resumo.TotalCartaoDebito;
+                TotalPix = resumo.TotalPix;
+
                 OnPropertyChanged(nameof(Diferenca));
+                OnPropertyChanged(nameof(TotalSangria));
+                OnPropertyChanged(nameof(TotalSuprimento));
             }
         }
         finally

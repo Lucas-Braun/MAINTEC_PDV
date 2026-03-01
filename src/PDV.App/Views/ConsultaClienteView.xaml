@@ -68,6 +68,7 @@
                     <KeyBinding Key="Return" Command="{Binding SelecionarCommand}"/>
                 </DataGrid.InputBindings>
                 <DataGrid.Columns>
+
                     <DataGridTextColumn Header="CODIGO" Width="80"
                         Binding="{Binding Id}"/>
                     <DataGridTextColumn Header="NOME" Width="*"
@@ -195,7 +196,7 @@
                     FontSize="14" Height="48"
                     Margin="0,0,10,0"/>
 
-            <Button Grid.Column="3" Content="SELECIONAR"
+            <Button Grid.Column="3" Content="SELECIONAR (ENTER)"
                     Command="{Binding SelecionarCommand}"
                     Style="{DynamicResource BotaoPositive}"
                     FontSize="14" Height="48"/>

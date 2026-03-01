@@ -18,6 +18,7 @@
         <KeyBinding Key="F5" Command="{Binding RealizarSangriaCommand}" />
         <KeyBinding Key="F6" Command="{Binding RealizarSuprimentoCommand}" />
         <KeyBinding Key="F7" Command="{Binding ConsultarVendasCommand}" />
+        <KeyBinding Key="F8" Command="{Binding AbrirDescontoCommand}" />
         <KeyBinding Key="F9" Command="{Binding CancelarVendaCommand}" />
         <KeyBinding Key="F10" Command="{Binding AbrirConfiguracoesCommand}" />
         <KeyBinding Key="F12" Command="{Binding FecharCaixaCommand}" />
@@ -425,6 +426,17 @@
                             </Button>
 
                             <Button Style="{DynamicResource BotaoFuncao}"
+                                    Background="{DynamicResource NeutralBrush}"
+                                    Command="{Binding AbrirDescontoCommand}"
+                                    ToolTip="Aplicar desconto no item ou venda (F8)">
+                                <StackPanel>
+                                    <TextBlock Text="DESCONTO" FontSize="14" FontWeight="Bold" />
+                                    <TextBlock Text="F8" FontSize="10" Opacity="0.7"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Style="{DynamicResource BotaoFuncao}"
                                     Background="{DynamicResource NegativeBrush}"
                                     Command="{Binding CancelarVendaCommand}"
                                     ToolTip="Cancelar a venda atual (F9)">
@@ -581,6 +593,74 @@
                                 Margin="0,0,12,0"/>
                         <Button Content="NAO, VOLTAR (ESC)"
                                 Command="{Binding DesistirCancelamentoCommand}"
+                                Style="{DynamicResource BotaoNeutral}"
+                                FontSize="14" Height="44"
+                                Padding="24,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ============================================= -->
+        <!-- OVERLAY DE DESCONTO (F8)                      -->
+        <!-- ============================================= -->
+        <Grid Grid.RowSpan="3" Panel.ZIndex="70">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding DescontoOverlayVisivel}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Border Background="#88000000"/>
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="16"
+                    Padding="40,30"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    MinWidth="400"
+                    Effect="{DynamicResource CardShadow}">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="APLICAR DESCONTO (F8)"
+                               FontSize="22" FontWeight="Bold"
+                               Foreground="{DynamicResource PrimaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,8"/>
+                    <TextBlock Text="Selecione um item ou aplique em todos"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,20"/>
+
+                    <TextBlock Text="Percentual (%):"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="13" Margin="0,0,0,6"/>
+                    <TextBox Text="{Binding DescontoPercentualInput, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource TextBoxPDV}"
+                             FontSize="24" FontWeight="Bold"
+                             Padding="12,8" TextAlignment="Center"
+                             Width="200"
+                             Margin="0,0,0,20"
+                             x:Name="TxtDesconto">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Return" Command="{Binding AplicarDescontoCommand}"/>
+                            <KeyBinding Key="Escape" Command="{Binding FecharDescontoCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
+
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center">
+                        <Button Content="APLICAR"
+                                Command="{Binding AplicarDescontoCommand}"
+                                Style="{DynamicResource BotaoPositive}"
+                                FontSize="14" Height="44"
+                                Padding="24,0"
+                                Margin="0,0,12,0"/>
+                        <Button Content="CANCELAR (ESC)"
+                                Command="{Binding FecharDescontoCommand}"
                                 Style="{DynamicResource BotaoNeutral}"
                                 FontSize="14" Height="44"
                                 Padding="24,0"/>

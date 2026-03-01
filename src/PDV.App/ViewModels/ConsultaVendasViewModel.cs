@@ -33,6 +33,16 @@ public partial class ConsultaVendasViewModel : ObservableObject
     // Callbacks
     public Action? Cancelado { get; set; }
 
+    // Estorno
+    [ObservableProperty]
+    private bool _confirmandoEstorno;
+
+    [ObservableProperty]
+    private string _motivoEstorno = string.Empty;
+
+    [ObservableProperty]
+    private string _mensagemSucesso = string.Empty;
+
     public async Task CarregarInicial()
     {
         await Pesquisar();
@@ -96,23 +106,17 @@ public partial class ConsultaVendasViewModel : ObservableObject
         {
             Processando = true;
             MensagemErro = string.Empty;
+            MensagemSucesso = string.Empty;
             DetalheAtual = null;
             ItensDetalhe.Clear();
 
             var status = string.IsNullOrEmpty(StatusFiltro) ? null : StatusFiltro;
-            var vendas = await _apiClient.ListarVendas(DataInicio, DataFim, status);
+            var nf = string.IsNullOrWhiteSpace(FiltroNf) ? null : FiltroNf.Trim();
+            var vendas = await _apiClient.ListarVendas(DataInicio, DataFim, status, nf);
 
             Vendas.Clear();
             foreach (var v in vendas)
-            {
-                // Filtro local por NF se informado
-                if (!string.IsNullOrWhiteSpace(FiltroNf))
-                {
-                    if (!v.NfNumero.ToString().Contains(FiltroNf.Trim()))
-                        continue;
-                }
                 Vendas.Add(v);
-            }
 
             TotalRegistros = Vendas.Count;
 
@@ -153,6 +157,65 @@ public partial class ConsultaVendasViewModel : ObservableObject
         catch (Exception ex)
         {
             MensagemErro = $"Erro ao carregar detalhe: {ex.Message}";
+        }
+        finally
+        {
+            Processando = false;
+        }
+    }
+
+    [RelayCommand]
+    private void IniciarEstorno()
+    {
+        if (VendaSelecionada == null) return;
+        if (VendaSelecionada.Status != "NFE_AUT")
+        {
+            MensagemErro = "Somente vendas autorizadas podem ser estornadas";
+            return;
+        }
+        MotivoEstorno = string.Empty;
+        ConfirmandoEstorno = true;
+    }
+
+    [RelayCommand]
+    private void CancelarEstorno()
+    {
+        ConfirmandoEstorno = false;
+        MotivoEstorno = string.Empty;
+    }
+
+    [RelayCommand]
+    private async Task ConfirmarEstorno()
+    {
+        if (VendaSelecionada == null) return;
+
+        if (string.IsNullOrWhiteSpace(MotivoEstorno))
+        {
+            MensagemErro = "Informe o motivo do estorno";
+            return;
+        }
+
+        try
+        {
+            Processando = true;
+            ConfirmandoEstorno = false;
+            MensagemErro = string.Empty;
+
+            var resultado = await _apiClient.EstornarVenda(VendaSelecionada.NfInCodigo, MotivoEstorno.Trim());
+
+            if (resultado.Sucesso)
+            {
+                MensagemSucesso = resultado.Mensagem ?? "Venda estornada com sucesso";
+                await Pesquisar(); // Recarrega lista
+            }
+            else
+            {
+                MensagemErro = resultado.Erro ?? "Erro ao estornar venda";
+            }
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao estornar: {ex.Message}";
         }
         finally
         {

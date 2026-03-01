@@ -150,6 +150,18 @@ public class ResumoTotaisDTO
 
     [JsonPropertyName("estornos")]
     public decimal Estornos { get; set; }
+
+    [JsonPropertyName("dinheiro")]
+    public decimal Dinheiro { get; set; }
+
+    [JsonPropertyName("cartao_credito")]
+    public decimal CartaoCredito { get; set; }
+
+    [JsonPropertyName("cartao_debito")]
+    public decimal CartaoDebito { get; set; }
+
+    [JsonPropertyName("pix")]
+    public decimal Pix { get; set; }
 }
 
 public class ConfigTerminalResponse
